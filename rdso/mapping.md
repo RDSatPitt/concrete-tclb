@@ -38,7 +38,7 @@ Develops collaboration skills: Helps you consider diverse perspectives and antic
 
 ### Color Scheme (responsibility)
 ❌ DO NOT: using color schemes with unintended social meanings.  E.g. Using a color scheme that gets progressively 
-redder for lower-grade MVA blocks.
+redder for lower-grade MVA blocks.  
 ✅ DO: Use color schemes that are colorblind-accessible 
 
 ### Showing Context
