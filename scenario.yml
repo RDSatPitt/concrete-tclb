@@ -1,0 +1,29 @@
+
+context:
+  id: tclb.1
+  business_objective: Prioritize a limited number of parcels for purchase based on Land Bank priorities.
+  products:
+    - Map of selected parcels
+    - Table of selected parcels and relevant data including price, neighborhood mva, delinquency, etc
+    - Paragraph explaining rationale for selected features and prioritization process
+  role: GIS Analyst
+  organization:
+    id: tclb
+    name: Tri-COG Land Bank
+    liaison: Vannie Wang
+
+
+original_datasets:
+  - id: ac_parcel_boundaries
+    name: Allegheny County Parcel Boundaries
+    location: https://data.wprdc.org/dataset/allegheny-county-parcel-boundaries1
+  - id: ac_property_assessments
+    name: Allegheny County Property Assessments
+    location: https://data.wprdc.org/dataset/property-assessments
+  - id: pgh_property_tax_delinquency
+    name: City of Pittsburgh Property Tax Delinquency
+    location: https://data.wprdc.org/dataset/city-of-pittsburgh-property-tax-delinquency
+  - id: mva_2021
+    name: Housing Market Value Analysis 2021
+    location: https://data.wprdc.org/dataset/market-value-analysis-2021
+
