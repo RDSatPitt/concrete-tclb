@@ -11,6 +11,24 @@ TRICOG_OVER_PARCELS_IMG_PATH = os.environ.get("TRICOG_OVER_PARCELS_IMG_PATH")
 ALL_PARCELS_IMG_PATH = os.environ.get("ALL_PARCELS_IMG_PATH")
 OAKLAND_PARCELS_IMG_PATH = os.environ.get("OAKLAND_PARCELS_IMG_PATH")
 CLIPPED_PARCELS_IMG_PATH = os.environ.get("CLIPPED_PARCELS_IMG_PATH")
+ARROW_IMAGE_PATH = os.environ.get("ARROW_IMAGE_PATH")
+PARCELS_CLIPPED_TO_TRICOG_IMG_PATH = os.environ.get("PARCELS_CLIPPED_TO_TRICOG_IMG_PATH")
+TRICOG_CLIPPED_TO_PARCELS_IMG_PATH = os.environ.get("TRICOG_CLIPPED_TO_PARCELS_IMG_PATH")
+TRICOG_BASE_PARCEL_OVERLAY_IMG_PATH = os.environ.get("TRICOG_BASE_PARCEL_OVERLAY_IMG_PATH")
+CLIPPED_PARCELS_PATH = os.environ.get("CLIPPED_PARCELS_PATH")
+CLIPPED_PARCELS_TRICOG_BASE_PATH = os.environ.get("CLIPPED_PARCELS_TRICOG_BASE_PATH")
+
+tricog_geo_path_cell_one_text = [
+        f"""One method to find the parcels we're looking for is to use the GeoPandas clip function. Clip is a tool \
+        that is common across GIS programs (such as ArcGIS, QGIS, and others). The tool "clips" a geospatial file to \
+        the boundaries of a second file that you specify (referred to as an "overlay layer"). You can think of \
+        clipping like using a cookie cutter on cookie dough; the clip function returns only the features (dough) that \
+        fell within the overlay layer's boundaries (cookie cutter). In GeoPandas, the clip function returns a new \
+        dataframe, where every row contains data from the base layer, so long as the data is within the overlay \
+        layer's boundaries. Data outside of those boundaries is excluded.""",
+    ]
+
+
 
 opening_greeting = f"""Hello! Glad to have you on board, because I can really use your help. We're excited to move forward with our goal of buying abandoned houses and converting them to affordable houses. 
 
@@ -79,3 +97,4 @@ response_dict = {'vocab': vocab_response,
                  'tricog': tricog_response,
                  'assessments': assessments_response,
                  }
+
