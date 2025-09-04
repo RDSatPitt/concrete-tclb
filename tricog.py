@@ -765,7 +765,7 @@ def _(PARCELS_PATH, get_continue_on_to_parcels_geojson, gp, mo, pd):
     return continue_with_parcels_df_discussion, parcels_df, parcels_df_df
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(ALL_PARCELS_IMG_PATH, mo, parcels_df_df):
     mo.stop(parcels_df_df is None)
 
@@ -780,7 +780,7 @@ def _(ALL_PARCELS_IMG_PATH, mo, parcels_df_df):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     continue_with_parcels_df_discussion,
     get_oakland_parcels_counter,
@@ -836,7 +836,7 @@ def _(get_oakland_parcels_state, mo, oakland_parcel_exploration):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(get_oakland_parcels_state, mo, start_analysis_button):
     mo.stop(not get_oakland_parcels_state())
 
@@ -849,7 +849,7 @@ def _(get_oakland_parcels_state, mo, start_analysis_button):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def tricog_boundary_text_boxes(
     mo,
     parcel_guess_validation,
@@ -922,6 +922,9 @@ def tricog_boundary_getters_setters(mo):
     #tricog_boundary_section
     get_tricog_text_path_cell_one, set_tricog_text_path_cell_one = mo.state(False)
     get_tricog_geo_path_cell_one, set_tricog_geo_path_cell_one = mo.state(False)
+    get_tricog_geo_path_1a, set_tricog_geo_path_1a = mo.state(False)
+    get_tricog_geo_path_1b, set_tricog_geo_path_1b = mo.state(False)
+    get_tricog_geo_path_cell_two, set_tricog_geo_path_cell_two = mo.state(False)
     get_attempted_text_first, set_attempted_text_first = mo.state(False)
     get_view_clipped_parcels_df, set_view_clipped_parcels_df = mo.state(False)
     get_tricog_clip_parcels_button, set_tricog_clip_parcels_button = mo.state(False)
@@ -929,6 +932,7 @@ def tricog_boundary_getters_setters(mo):
     get_tricog_geo_path_parcel_count_guess, set_tricog_geo_path_parcel_count_guess = mo.state(False)
 
     get_tricog_text_path_radio_buttons, set_tricog_text_path_radio_buttons = mo.state(False)
+    get_tricog_text_path_cell_two, set_tricog_text_path_cell_two = mo.state(False)
     get_tricog_text_learn_text_box, set_tricog_text_path_learn_text_box = mo.state(False)
     get_tricog_text_output_survey, set_tricog_text_output_survey = mo.state(False)
 
@@ -936,7 +940,10 @@ def tricog_boundary_getters_setters(mo):
         get_attempted_text_first,
         get_tricog_clip_parcels_button,
         get_tricog_clip_tricog_button,
+        get_tricog_geo_path_1a,
+        get_tricog_geo_path_1b,
         get_tricog_geo_path_cell_one,
+        get_tricog_geo_path_cell_two,
         get_tricog_text_output_survey,
         get_tricog_text_path_cell_one,
         get_tricog_text_path_radio_buttons,
@@ -944,7 +951,10 @@ def tricog_boundary_getters_setters(mo):
         set_attempted_text_first,
         set_tricog_clip_parcels_button,
         set_tricog_clip_tricog_button,
+        set_tricog_geo_path_1a,
+        set_tricog_geo_path_1b,
         set_tricog_geo_path_cell_one,
+        set_tricog_geo_path_cell_two,
         set_tricog_geo_path_parcel_count_guess,
         set_tricog_text_output_survey,
         set_tricog_text_path_cell_one,
@@ -1063,7 +1073,7 @@ def tricog_boundary_buttons(
     )
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     CLIPPED_PARCELS_PATH,
     CLIPPED_PARCELS_TRICOG_BASE_PATH,
@@ -1106,7 +1116,7 @@ def _(
     )
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(get_start_analysis_button, mo):
     view_analysis = get_start_analysis_button()
 
@@ -1135,7 +1145,7 @@ def _(get_start_analysis_button, mo):
     return (view_analysis,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(get_attempted_text_first, mo, municipal_analysis_form, view_analysis):
     mo.stop(not view_analysis and get_attempted_text_first())
 
@@ -1226,7 +1236,7 @@ def _():
     return (tricog_text,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def tricog_path_header(
     get_tricog_geo_path_cell_one,
     get_tricog_text_path_cell_one,
@@ -1317,7 +1327,7 @@ def tricog_path_cell_1(
     return tclb_municipalities, tricog_text_path_cell_two
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     get_oakland_overlay_counter,
     gp,
@@ -1327,6 +1337,7 @@ def _(
     oakland_parcels_df,
     overlay,
     pd,
+    set_tricog_geo_path_1a,
     strip_string,
     tricog_geo_path_cell_one,
     tricog_geo_path_text_box_oakland_clip_demo,
@@ -1334,6 +1345,7 @@ def _(
 ):
     mo.stop(not tricog_geo_path_cell_one)
     oakland_overlay_output_response = ''
+
 
     if tricog_geo_path_cell_one: 
         mo.output.replace(
@@ -1354,33 +1366,26 @@ def _(
             if strip_string(oakland_overlay_input) == oakland_overlay_expected_output_stripped:
                 clipped_oakland_parcels = gp.clip(oakland_parcels_df, overlay)
                 clipped_oakland_parcels_df = pd.DataFrame(clipped_oakland_parcels.astype({'geometry':'str'}))
+                set_tricog_geo_path_1a(True)
                 mo.output.replace_at_index(f"""Correct!""", 1)
             else: 
                 oakland_overlay_output_response = incorrect_answer_text_generator(oakland_overlay_input, oakland_overlay_expected_output, get_oakland_overlay_counter())
                 mo.output.replace_at_index(f"""{oakland_overlay_output_response[0]}""",1)
     else: 
         mo.output.clear()
-    return (
-        clipped_oakland_parcels,
-        clipped_oakland_parcels_df,
-        oakland_overlay_expected_output_stripped,
-        oakland_overlay_input,
-    )
+    return clipped_oakland_parcels, clipped_oakland_parcels_df
 
 
-@app.cell(hide_code=True)
+@app.cell
 def tricog_path_cell_1a_clipping(
+    get_tricog_geo_path_1a,
     mo,
-    oakland_overlay_expected_output_stripped,
-    oakland_overlay_input,
-    strip_string,
-    tricog_geo_path_cell_one,
     tricog_text,
     view_clipped_parcels_button,
 ):
-    mo.stop(strip_string(oakland_overlay_input) != oakland_overlay_expected_output_stripped)
+    mo.stop(not get_tricog_geo_path_1a())
 
-    if tricog_geo_path_cell_one:
+    if get_tricog_geo_path_1a():
         mo.output.replace(
             mo.vstack([
                 mo.md(tricog_text['geo_path']['cell_one_a_clipping_text']['part_one']),
@@ -1405,19 +1410,18 @@ def _(clipped_oakland_parcels_df, get_view_clipped_parcels_df, mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
+    get_tricog_geo_path_1a,
     mo,
-    oakland_overlay_expected_output_stripped,
-    oakland_overlay_input,
-    strip_string,
-    tricog_geo_path_cell_one,
+    set_tricog_geo_path_1b,
     tricog_geo_path_oakland_clip_expectations,
     tricog_text,
 ):
-    mo.stop(strip_string(oakland_overlay_input) != oakland_overlay_expected_output_stripped)
+    # mo.stop(strip_string(oakland_overlay_input) != oakland_overlay_expected_output_stripped)
+    mo.stop(not get_tricog_geo_path_1a())
     tricog_geo_path_cell_one_a = False
-    if tricog_geo_path_cell_one: 
+    if get_tricog_geo_path_1a(): 
         mo.output.replace(
             mo.vstack([
                 mo.md(tricog_text['geo_path']['cell_one_a_clipping_text']['part_two']),
@@ -1426,6 +1430,7 @@ def _(
         )
         if tricog_geo_path_oakland_clip_expectations.value: 
             tricog_geo_path_cell_one_a = True
+            set_tricog_geo_path_1b(True)
     else: 
         mo.output.clear()
 
@@ -1433,9 +1438,15 @@ def _(
     return (tricog_geo_path_cell_one_a,)
 
 
-@app.cell
-def _(clipped_oakland_parcels, mo, tricog_geo_path_cell_one_a, tricog_text):
-    mo.stop(not tricog_geo_path_cell_one_a)
+@app.cell(hide_code=True)
+def _(
+    clipped_oakland_parcels,
+    get_tricog_geo_path_1b,
+    mo,
+    tricog_geo_path_cell_one_a,
+    tricog_text,
+):
+    mo.stop(not get_tricog_geo_path_1b())
     if tricog_geo_path_cell_one_a: 
         clipped_oakland_parcels_exploration = clipped_oakland_parcels.explore(style_kwds=dict(color='black', fillColor='yellow'))
         mo.output.replace(
@@ -1451,7 +1462,7 @@ def _(clipped_oakland_parcels, mo, tricog_geo_path_cell_one_a, tricog_text):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     mo,
     tricog_geo_path_cell_one_a,
@@ -1475,7 +1486,7 @@ def _(
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     ARROW_IMAGE_PATH,
     PARCELS_CLIPPED_TO_TRICOG_IMG_PATH,
@@ -1512,13 +1523,14 @@ def _(
     return selected_base_layer, selected_overlay_layer
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     get_tricog_clip_parcels_button,
     get_tricog_clip_tricog_button,
     mo,
     selected_base_layer,
     selected_overlay_layer,
+    set_tricog_geo_path_cell_two,
     tricog_geo_path_post_clip_parcel_count_guess_box,
 ):
     mo.stop(not get_tricog_clip_parcels_button() and not get_tricog_clip_tricog_button())
@@ -1535,11 +1547,11 @@ def _(
         )
     )
     if tricog_geo_path_post_clip_parcel_count_guess_box.value: 
-        tricog_geo_path_cell_two = True
-    return (tricog_geo_path_cell_two,)
+        set_tricog_geo_path_cell_two(True)
+    return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(tricog_geo_path_post_clip_parcel_count_guess_box):
     parcel_count_guess = None
     if tricog_geo_path_post_clip_parcel_count_guess_box.value: 
@@ -1547,7 +1559,7 @@ def _(tricog_geo_path_post_clip_parcel_count_guess_box):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def tricog_path_cell_2(
     assessments_df,
     clipped_parcels_df,
@@ -1556,12 +1568,12 @@ def tricog_path_cell_2(
     countywide_municipality_name_list,
     get_tricog_clip_parcels_button,
     get_tricog_clip_tricog_button,
+    get_tricog_geo_path_cell_two,
     mo,
-    tricog_geo_path_cell_two,
     tricog_text_path_box_countywide_muni_name_list,
     tricog_text_path_cell_two,
 ):
-    mo.stop(not tricog_text_path_cell_two and not tricog_geo_path_cell_two)
+    mo.stop(not tricog_text_path_cell_two and not get_tricog_geo_path_cell_two())
     tricog_text_question_box_two_bool = False
     tricog_geo_question_box_two_bool = False
     begin_residential_path = False
@@ -1589,7 +1601,7 @@ def tricog_path_cell_2(
                 tricog_text_question_box_two_bool = True
             else:
                 mo.output.append('Try again!')                
-    elif tricog_geo_path_cell_two:
+    elif get_tricog_geo_path_cell_two():
         if get_tricog_clip_parcels_button(): 
             selected_clipped_df = clipped_parcels_df
             final_geo_output_text = mo.md(f"""The final number of rows is {len(clipped_parcels_df)}. That's significantly less than the 500,000 we started with. It looks like the `clip` function worked!<br><br>
@@ -1630,7 +1642,7 @@ def tricog_path_cell_2(
     )
 
 
-@app.cell
+@app.cell(hide_code=True)
 def tricog_path_cell_2a(
     clip_function_clip_output_length_code,
     clipped_parcels,
@@ -1687,7 +1699,7 @@ def tricog_path_cell_2a(
     return (tricog_text_question_box_three_bool,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def tricog_path_cell_2b(
     mo,
     munidesc,
@@ -1780,7 +1792,7 @@ def _(
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     get_tricog_text_path_radio_buttons,
     mo,
@@ -1816,7 +1828,7 @@ def _(
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(geo_analysis_btn, get_tricog_text_output_survey, mo):
     mo.stop(not get_tricog_text_output_survey())
 
@@ -2444,6 +2456,8 @@ def _(
     strip_string,
 ):
     mo.stop(not get_residential_post_chat_move_on())
+    residential_parcels = None
+
 
     if get_residential_post_chat_move_on(): 
         mo.output.replace(
@@ -2667,6 +2681,7 @@ def abandoned_drop_down_form(
 @app.cell
 def abandoned_path_prep(
     filtered_parcels_df_liens_col_copy,
+    get_abandoned_path_0,
     liens_df,
     mo,
     reset_abandoned_paths,
@@ -2682,6 +2697,8 @@ def abandoned_path_prep(
     strip_string,
     time,
 ):
+    mo.stop(not get_abandoned_path_0())
+
     def handle_parcels_with_liens(value):
         if strip_string(value) == strip_string(parcels_with_liens): 
             set_abandoned_path_iteration_2(True)
@@ -2772,12 +2789,15 @@ def abandoned_path_prep(
 
 @app.cell(hide_code=True)
 def abandoned_exp_builder(
+    get_abandoned_path_0,
     liens_df,
     mo,
     parcels_df,
     parcels_df_df,
     set_abandoned_path_join_2,
 ):
+    mo.stop(not get_abandoned_path_0())
+
     parcels_cols_list = [f"{item} (parcels_df)" for item in list(parcels_df.columns)]
     liens_cols_list = [f"{item} (liens_df)" for item in list(liens_df.columns)]
 
@@ -2790,7 +2810,16 @@ def abandoned_exp_builder(
 
 
 @app.cell
-def abandoned_file_prep(copy, liens_df, parcels_df, parcels_df_df, pd):
+def abandoned_file_prep(
+    copy,
+    get_abandoned_path_0,
+    liens_df,
+    mo,
+    parcels_df,
+    parcels_df_df,
+    pd,
+):
+    mo.stop(not get_abandoned_path_0())
 
     filtered_parcels_df = parcels_df_df[parcels_df_df["PIN"].isin(liens_df['pin'])]
     filtered_parcels_df_liens_col = filtered_parcels_df.assign(lien_amount='')
@@ -3389,7 +3418,7 @@ def _(
     residential_parcels,
 ):
     mo.stop(not get_combining_files_0())
-        
+
     clipped_and_residential_parcels = pd.merge(left=clipped_parcels, right=residential_parcels[['PARID', 'CLASSDESC', 'USEDESC']], left_on='PIN', right_on='PARID')
     final_output = pd.merge(left=clipped_and_residential_parcels, right=parcels_df_with_joined_liens[['PIN', 'total_amount']], left_on='PIN', right_on='PIN')
     return (final_output,)
