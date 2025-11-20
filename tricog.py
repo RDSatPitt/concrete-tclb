@@ -116,7 +116,7 @@ def constant_text():
 @app.cell
 def _(mo):
 
-    data_host = "https://rds-concrete.s3.us-east-1.amazonaws.com/data"
+    data_host = "https://rds-concrete.com/data"
 
     PARCELS_PATH = f"{data_host}/parcels.geojson"
     ASSESSMENTS_PATH = f"{data_host}/assessments.csv"
