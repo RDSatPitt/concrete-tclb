@@ -1,7 +1,24 @@
 import marimo
 
-__generated_with = "0.14.6"
+__generated_with = "0.13.15"
 app = marimo.App(width="medium")
+
+
+@app.cell
+def _():
+    import micropip
+    return (micropip,)
+
+
+@app.cell
+async def _(micropip):
+    await micropip.install("folium")
+    await micropip.install("matplotlib")
+    await micropip.install("mapclassify")
+
+    import matplotlib.pyplot as plt
+    # import geopandas as gp
+    return
 
 
 @app.cell(hide_code=True)
@@ -9,31 +26,113 @@ def imports():
     import marimo as mo
     import geopandas as gp
     import pandas as pd
-    import csv
-    import matplotlib.pyplot as plt
-    import asyncio
     import time
     import copy
+    return copy, gp, mo, pd, time
 
-    from constants import (
-        PARCELS_PATH,
-        ASSESSMENTS_PATH,
-        TRICOG_PATH,
-        LIENS_PATH,
-        ALL_PARCELS_IMG_PATH,
-        CLIPPED_PARCELS_IMG_PATH,
-        OAKLAND_PARCELS_IMG_PATH,
-        TRICOG_OVER_PARCELS_IMG_PATH,
-        ARROW_IMAGE_PATH,
-        PARCELS_CLIPPED_TO_TRICOG_IMG_PATH, 
-        TRICOG_CLIPPED_TO_PARCELS_IMG_PATH,
-        TRICOG_BASE_PARCEL_OVERLAY_IMG_PATH,
-        CLIPPED_PARCELS_PATH, 
-        CLIPPED_PARCELS_TRICOG_BASE_PATH,
-        response_dict,
-        opening_greeting,   
-    )
 
+@app.cell(hide_code=True)
+def constant_text():
+    # tricog_geo_path_cell_one_text = [
+    #         f"""One method to find the parcels we're looking for is to use the GeoPandas clip function. Clip is a tool \
+    #         that is common across GIS programs (such as ArcGIS, QGIS, and others). The tool "clips" a geospatial file to \
+    #         the boundaries of a second file that you specify (referred to as an "overlay layer"). You can think of \
+    #         clipping like using a cookie cutter on cookie dough; the clip function returns only the features (dough) that \
+    #         fell within the overlay layer's boundaries (cookie cutter). In GeoPandas, the clip function returns a new \
+    #         dataframe, where every row contains data from the base layer, so long as the data is within the overlay \
+    #         layer's boundaries. Data outside of those boundaries is excluded.""",
+    #     ]
+
+
+
+    # opening_greeting = f"""Hello! Glad to have you on board, because I can really use your help. We're excited to move forward with our goal of buying abandoned houses and converting them to affordable houses. 
+
+    # I'm going to give you a file that has every parcel in Allegheny County, and I want you to tell me which parcels we should consider buying. The list can be as long as you think is appropriate as long as the parcels meet three rules: 
+
+    # 1. The parcels are within our boundaries. 
+    # 2. The parcels have single-family houses on them. 
+    # 3. The parcels are tax delinquent. 
+
+    # I know I'm throwing a lot at you, so feel free to ask for help. You can ask for information about those three rules, about key vocabulary terms, or about the important concepts you'll learn by helping me out. 
+
+    # Simply type **guidelines**, **vocabulary**, **concepts** or **files** to learn more about those topics. You can always type **help** if you need a reminder of this information, and you can also type **done** if you're finished and ready to start working."""
+    # vocab_response = f"""Here's a list of field-specific words I can help you with. 
+
+    # "**Land Bank**"
+
+    # "**Parcel**"
+
+    # "**Polygon**"
+
+    # "**Multipolygon**"
+
+    # "**Tax Delinquency**"
+
+    # "**Liens**"
+
+    # If you type in any of those words, I can tell you what they mean. You can also type "**help**" and I'll repeat the different ways I can help. Or you can type "**Done**" if you're ready to start working!
+    # """
+
+    # land_bank_response = f"""A land bank is a special organization created by state and local laws to generate affordable housing in a community. Land Banks typically get special permission to purchase abandonded properties and sell them to individuals in the community for below market rates."""
+    # parcels_response = f"""Parcels are the smallest distinct units of land in a municipality. For these purposes, it may help to think of a parcel as what a homeowner would call their "property" -- you don't usually think about just their house, but also their yard, their driveway, or whatever else is inside their "property". That said, all sorts of land can be a parcel: city parks are parcels, the buildings at school sit on parcels, warehouses and hospitals are on parcels too."""
+    # polygon_response = f"""In GIS terms, polygons are one of three vector features that can be represented on a map (along with points and lines). Polygons have at least three lines that form the border of a shape (much like polygons in the context of geometry). Typically, parcels in a town are polygons."""
+    # multipolygon_response = f"""Multipolygons are multiple polygons that, together, represent a singular entity. The US map would be represented as a multipolygon (with its 48 connected states, Alaska, Hawaii, and other territories)."""
+    # tax_delinquency_response = f"""If you have not paid your taxes on time, you are said to be tax delinquent. If you eventually do pay your taxes, you can exit tax delinquency (in other words, 'tax delinquency' is not a permanent state or label)."""
+    # lien_response = f"""A penalty assigned to someone who is tax delinquent. Liens are debts that are attached to properties or other large-value possessions. If you have a lien on your house and you sell it, the lien has to be paid off before you receive money from the sale."""
+    # concept_response = f"""After completing this project, you will have: \n\n1. been introduced to geospatial file types, and ways to open the files\n\n2. be introduced to geopandas and compare that library\n\n3. be introduced to GIS processing techniques such as 'clip'\n\n4. consider the human context behind data"""
+    # rules_response = f"""When you create your final list of parcels, every parcel must meet these three rules:\n\n1. They must all be within TriCOG's boundaries\n\n2. They must be residential properties with single-family homes\n\n3. They must be abandoned.\n\nWhich would you like to know more about? Type **1**, **2**, or **3**."""
+    # one_response = f"""**Boundaries**: The TriCOG Land Bank operates within legally-defined borders. Any houses or parcels we purchase have to be within those borders. One of the files I give you will be a map that shows exactly where those borders are."""
+    # two_response = f"""**Residential Properties**: Properties are classified by how they're used: if they're for living, they're residential. If they're for businesses, they're commercial. There are several other different classifications, and parcels of all different types will be on the list I give you. You just need to make sure that any you select are residential."""
+    # three_response = f"""**Abandoned Homes**: There's no document that lists abandoned homes in the county. But we can use tax liens as a proxy -- if someone has stopped paying their taxes, it may be because they've abandoned the house. I have a file with liens I can give you that'll tell you which houses have liens on them."""
+    # files_response = f"""I'm giving you four files that you'll need to use to complete the project: **`liens.csv`**, **`assessments.csv`**, **`parcels.geojson`**, and **`tricog.geojson`**. You can type in the name of any of those files (with the extension) if you want more information."""
+    # liens_csv_response = f"""**`liens.csv`** is a file that lists every parcel in Allegheny County that currently has liens against it."""
+    # assessments_response = f"""**`assessments.csv`** is a file that has descriptive data about every parcel in the county. This can tell us which parcels have houses or businesses or parks (among other details) without having to drive and look at them."""
+    # parcels_geojson_response = f"""**`parcels.geojson`** is a file that contains data on the shape and size of every parcel in the county."""
+    # help_response = f"""I can provide more information about the **guidelines** for your task, the **concepts** you'll learn by doing it, the **vocabulary** specific to the field, the **files** needed to perform the task. If you're ready to begin, you can type **done**."""
+    # tricog_response = f"""**`tricog.geojson`** contains the shape of the TriCOG land bank's operating boundaries. By law, our business efforts have to stay within these boundaries."""
+    # done_response = f"""Great! The files you'll need should be loading shortly, along with some notes about how to use them. Good luck!"""
+
+    # response_dict = {'vocab': vocab_response,
+    #                  'land bank': land_bank_response,
+    #                  'parcel': parcels_response,
+    #                  'polygon': polygon_response,
+    #                  'multi': multipolygon_response,
+    #                  'tax delinquen': tax_delinquency_response,
+    #                  'lien': lien_response,
+    #                  'concepts': concept_response,
+    #                  'guidelines': rules_response,
+    #                  '1': one_response,
+    #                  '2': two_response,
+    #                  '3': three_response,
+    #                  'help': help_response,
+    #                  'files': files_response,
+    #                  'done': done_response,
+    #                  'liens_file': liens_csv_response,
+    #                  'parcels_geojson': parcels_geojson_response,
+    #                  'tricog': tricog_response,
+    #                  'assessments': assessments_response,
+    #                  }
+    return
+
+
+@app.cell
+def _(mo):
+    PARCELS_PATH = str(mo.notebook_location() / "data" / "parcels.geojson")
+    ASSESSMENTS_PATH = str(mo.notebook_location() / "data" / "assessments.csv")
+    LIENS_PATH = str(mo.notebook_location() / "data" / "liens.csv")
+    TRICOG_PATH = str(mo.notebook_location() / "data" / "tricog_footprint.geojson")
+    OVERLAY_LAYER = str(mo.notebook_location() / "data" / "overlay_layer.geojson")
+    OAKLAND_PARCELS_PATH = str(mo.notebook_location() / "data" / "oakland_parcels.geojson")
+    TRICOG_OVER_PARCELS_IMG_PATH = str(mo.notebook_location() / "images" / "tricog_over_parcels.png")
+    ALL_PARCELS_IMG_PATH = str(mo.notebook_location() / "images" / "ac_parcels.png")
+    OAKLAND_PARCELS_IMG_PATH = str(mo.notebook_location() / "images" / "oakland_parcels.png")
+    CLIPPED_PARCELS_IMG_PATH = str(mo.notebook_location() / "images" / "clipped_parcels.png")
+    ARROW_IMAGE_PATH = str(mo.notebook_location() / "images" / "clip_arrow.png")
+    PARCELS_CLIPPED_TO_TRICOG_IMG_PATH = str(mo.notebook_location() / "images" / "parcels_clipped_to_tricog.png")
+    TRICOG_CLIPPED_TO_PARCELS_IMG_PATH = str(mo.notebook_location() / "images" / "tricog_clipped_to_parcels.png")
+    TRICOG_BASE_PARCEL_OVERLAY_IMG_PATH = str(mo.notebook_location() / "images" / "tricog_base_parcel_overlay.png")
+    CLIPPED_PARCELS_PATH = str(mo.notebook_location() / "data" / "clipped_parcels.geojson")
+    CLIPPED_PARCELS_TRICOG_BASE_PATH = str(mo.notebook_location() / "data" / "clipped_parcels_tricog_base.geojson")
     return (
         ALL_PARCELS_IMG_PATH,
         ARROW_IMAGE_PATH,
@@ -41,17 +140,14 @@ def imports():
         CLIPPED_PARCELS_PATH,
         CLIPPED_PARCELS_TRICOG_BASE_PATH,
         LIENS_PATH,
+        OAKLAND_PARCELS_PATH,
+        OVERLAY_LAYER,
         PARCELS_CLIPPED_TO_TRICOG_IMG_PATH,
         PARCELS_PATH,
         TRICOG_BASE_PARCEL_OVERLAY_IMG_PATH,
         TRICOG_CLIPPED_TO_PARCELS_IMG_PATH,
         TRICOG_OVER_PARCELS_IMG_PATH,
         TRICOG_PATH,
-        copy,
-        gp,
-        mo,
-        pd,
-        time,
     )
 
 
@@ -77,8 +173,6 @@ def expected_values():
     clip_function_code = 'clipped_parcels = gp.clip(parcels, tricog)'
     clip_function_parcel_length_code = "f'length of parcels: {len(parcels)}'"
     clip_function_clip_output_length_code = "f'length of clipped_parcels: {len(clipped_parcels)}'"
-
-
     return (
         assessments_file_expected_code,
         clip_function_clip_output_length_code,
@@ -94,8 +188,8 @@ def expected_values():
 
 
 @app.cell(hide_code=True)
-def _(gp):
-    oakland_parcels_df = gp.read_file('data/oakland_parcels.geojson')
+def _(OAKLAND_PARCELS_PATH, gp):
+    oakland_parcels_df = gp.read_file(OAKLAND_PARCELS_PATH)
     return (oakland_parcels_df,)
 
 
@@ -1077,12 +1171,12 @@ def tricog_boundary_buttons(
 def _(
     CLIPPED_PARCELS_PATH,
     CLIPPED_PARCELS_TRICOG_BASE_PATH,
+    OVERLAY_LAYER,
     assessments_df,
     get_start_analysis_button,
     gp,
     mo,
     oakland_parcel_exploration,
-    pd,
 ):
     # Analysis prep
 
@@ -1100,11 +1194,13 @@ def _(
                 subtitle="Please be patient, this may take a minute"
             ) as _spinner:
                 clipped_parcels = gp.read_file(CLIPPED_PARCELS_PATH)
-                clipped_parcels_df = pd.DataFrame(clipped_parcels.astype({'geometry':'str'}))
+                # clipped_parcels_df = pd.DataFrame(clipped_parcels.astype({'geometry':'str'}))
+                clipped_parcels_df = clipped_parcels.iloc[0:, 0:-1]
                 clipped_parcels_tricog_base = gp.read_file(CLIPPED_PARCELS_TRICOG_BASE_PATH)
-                clipped_parcels_tricog_base_df = pd.DataFrame(clipped_parcels_tricog_base.astype({'geometry':'str'}))
+                clipped_parcels_tricog_base_df = clipped_parcels_tricog_base.iloc[0:30, 0:24]
+                # clipped_parcels_tricog_base_df = pd.DataFrame(clipped_parcels_tricog_base.astype({'geometry':'str'}))
                 m = oakland_parcel_exploration
-                overlay = gp.read_file("data/overlay_layer.geojson")
+                overlay = gp.read_file(OVERLAY_LAYER)
 
     return (
         clipped_parcels,
@@ -1136,7 +1232,7 @@ def _(get_start_analysis_button, mo):
 
     We can use Python to compare the parcels' municipality names listed in `assessments_df` to the allowable municipality names in `tricog_df`, or we can compare the location of each parcel from `parcels_df` to the location of the municipalities in `tricog_df`.<br>
 
-    Do you think it's better to start with `assessments_df` and analyze the text? Or is it better to start with `tricog_df` and analyze the geospatial data? In the form below, select which dataframe you think would make a better choice to work with. Then, in the text box, explain why you think that choice is the best. (Don't worry too much, you can always go back and re-choose later if you change your mind!)<br>
+    Do you think it's better to start with `assessments_df` and analyze the text? Or is it better to start with `parcels_df` and analyze the geospatial data? In the form below, select which dataframe you think would make a better choice to work with. Then, in the text box, explain why you think that choice is the best. (Don't worry too much, you can always go back and re-choose later if you change your mind!)<br>
     """)
         ]
     )
@@ -1156,7 +1252,7 @@ def _(get_attempted_text_first, mo, municipal_analysis_form, view_analysis):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _():
     #text options for tricog path
 
@@ -1164,72 +1260,27 @@ def _():
         'geo_path': {
             'cell_one_text': {
                 'part_one': 
-                    f"""One method to find the parcels we're looking for is to use the GeoPandas clip function. Clip is a tool \
-                    that is common across GIS programs (such as ArcGIS, QGIS, and others). The tool "clips" a geospatial file to \
-                    the boundaries of a second file that you specify (referred to as an "overlay layer"). You can think of \
-                    clipping like using a cookie cutter on cookie dough; the clip function returns only the features (dough) that \
-                    fell within the overlay layer's boundaries (cookie cutter). In GeoPandas, the clip function returns a new \
-                    dataframe, where every row contains data from the base layer, so long as the data is within the overlay \
-                    layer's boundaries. Data outside of those boundaries is excluded.<br><br>
-                    In GeoPandas, the clip function returns a new dataframe, where every row contains data from the base layer, and is \
-                    a geospatial feature located within the overlay layer. The format for using the clip function in GeoPandas is as \
-                    follows: \
-                    <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*\
-                    output_variable_name* = **gp.clip(** *base_layer_name*,  *overlay_layer_name* **)**\
-                    <br><br>\
-                    There are additional parameters that can be used in the function, but this is all we'll need for this example. \
-                    <br><br>
-                    Let's look at the parcels from Oakland that were introduced above. This time, however, you'll notice that \
-                    there's a blue circle in the middle of the map. This blue circle is a shape that we'll use as our "overlay layer" \ 
-                    on the Oakland parcels, as a demonstration. (Overlay layers from real-world data are rarely perfect shapes, but \
-                    this is just an example).""",
+                    f"""One method to find the parcels we're looking for is to use the GeoPandas clip function. Clip is a tool that is common across GIS programs (such as ArcGIS, QGIS, and others). The tool 'clips' a geospatial file to the boundaries of a second file that you specify (referred to as an "overlay layer"). You can think of clipping like using a cookie cutter on cookie dough; the clip function returns only the features (dough) that fell within the overlay layer's boundaries (cookie cutter). In GeoPandas, the clip function returns a new dataframe, where every row contains data from the base layer, so long as the data is within the overlay layer's boundaries. Data outside of those boundaries is excluded.<br><br>In GeoPandas, the clip function returns a new dataframe, where every row contains data from the base layer, and is a geospatial feature located within the overlay layer. The format for using the clip function in GeoPandas is as follows: <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*output_variable_name* = **gp.clip(** *base_layer_name*,  *overlay_layer_name* **)** <br>There are additional parameters that can be used in the function, but this is all we will need for this example. <br><br> Let's look at the parcels from Oakland that were introduced above. This time, however, you'll notice that there's a blue circle in the middle of the map. This blue circle is a shape that we'll use as our overlay layer on the Oakland parcels, as a demonstration. (Overlay layers from real-world data are rarely perfect shapes, but this is just an example).""", 
                 'part_two': 
-                    f"""<br>For this example, the base layer is named `oakland_parcels_df` and the overlay layer is named `overlay`. \
-                    Using the GeoPandas `clip` function format outlined above, write the clip function in the box below and hit Submit.
-                    <br><br>"""
-                    ,
+                    f"<br>For this example, the base layer is named `oakland_parcels_df` and the overlay layer is named `overlay`. Using the GeoPandas `clip` function format outlined above, write the clip function in the box below and hit Submit.<br><br>",
             },
             'cell_one_a_clipping_text': {
                 'part_one': 
-                    f"""The clip function that you just ran generated a new GeoPandas dataframe, which we have stored in the \
-                    variable `clipped_oakland_parcels`. The output dataframe has the same columns as the base layer dataframe \
-                    (`oakland_parcels`). The data in columns that have descriptive data (such as PIN and MAPBLOCKLO) have remained \
-                    the same, but the columns with geospatial data have updated to reflect the size of the output parcels. 
-
-                    Click the button below if you would like to look at the dataframe.""",
+                    f"The clip function that you just ran generated a new GeoPandas dataframe, which we have stored in the variable `clipped_oakland_parcels`. The output dataframe has the same columns as the base layer dataframe (`oakland_parcels`). The data in columns that have descriptive data (such as PIN and MAPBLOCKLO) have remained the same, but the columns with geospatial data have updated to reflect the size of the output parcels.<br><br> Click the button below if you would like to look at the dataframe.",
                 'optional_dataframe_button_text': 
-                    f"""At a quick glance, you can see that the dataframe only has [x number] of rows, but if you scroll up to the map \
-                    above with the original oakland_parcels mapped out, you can notice that the map clearly displays more parcels than \
-                    that (in fact, it has [y number] of parcels). This is piece of evidence we can use to consider whether or not the \
-                    clip function worked: if the overlay layer was smaller than the base layer, but the output dataframe had the same \
-                    number of rows, it would suggest that something went wrong. (This is not a full confirmation of success or failure – \
-                    just one partial check).""",
+                    f"At a quick glance, you can see that the dataframe only has [x number] of rows, but if you scroll up to the map above with the original oakland_parcels mapped out, you can notice that the map clearly displays more consider whether or not the parcels than that (in fact, it has [y number] of parcels). This is piece of evidence we can use to clip function worked: if the overlay layer was smaller than the base layer, but the output dataframe had the same number of rows, it would suggest that something went wrong. (This is not a full confirmation of success or failure - just one partial check).",
                 'part_two': 
-                    f"""Just like we did before with the tricog_df dataframe, we can visualize the `clipped_oakland_parcels` \
-                    dataframe using the explore method! Before we do that, though, take a second to think about what the output \
-                    will look like when mapped out. Before you ran the clip function, you had a group of parcels, and a circular \
-                    overlay layer on top of them. What will `clipped_oakland_parcels` look like? Consider, for example: if a parcel \
-                    was partially inside and partially outside of the overlay layer, will it be included in the output? Will it be \
-                    completely included? Will it be cut in half? Describe how you imagine the result of the clipping will look when \
-                    you map it in the text box. 
-                    <br><br>""",
+                    f"Just like we did before with the tricog_df dataframe, we can visualize the `clipped_oakland_parcels` dataframe using the explore method! Before we do that, though, take a second to think about what the output will look like when mapped out. Before you ran the clip function, you had a group of parcels, and a circular overlay layer on top of them. What will `clipped_oakland_parcels` look like? Consider, for example: if a parcel was partially inside and partially outside of the overlay layer, will it be included in the output? Will it be completely included? Will it be cut in half? Describe how you imagine the result of the clipping will look when you map it in the text box. <br><br>",
             },
             'cell_one_b_clipping_text': {
                 'part_one': 
-                    f"""As you can see above, the parcels that are left fit into the shape made by the overlay layer. Any parcel that \
-                    extended outside of the overlay layer was cut along the border of the overlay layer, and only the portion of the \
-                    parcel inside the overlay layer remains. (Just like cookie cutters and cookie dough!) The remaining parcels have the \
-                    same descriptive data in the new dataframe -- the PIN and MAPBLOCKLO are the same, but the shapes' lengths and areas \
-                    represent their new, smaller, shape.<br><br>""",
+                    f"As you can see above, the parcels that are left fit into the shape made by the overlay layer. Any parcel that extended outside of the overlay layer was cut along the border of the overlay layer, and only the portion of the parcel inside the overlay layer remains. (Just like cookie cutters and cookie dough!) The remaining parcels have the same descriptive data in the new dataframe -- the PIN and MAPBLOCKLO are the same, but the shapes' lengths and areas represent their new, smaller, shape.<br><br>",
             },
             'cell_two': {
                 'part_one': 
-                    f"""Now that we have seen how clip works, let's try it on the countywide parcel set. Remember: we are trying to \
-                    find the parcels within the county (`parcels_df`) that are within TriCOG's operating boundaries (`tricog_df`).<br><br> 
-                    With that goal in mind, which file would be the base layer, and which file would be the overlay layer? Select your \
-                    response below and click 'run' to try it out.""",
+                    f"Now that we have seen how clip works, let's try it on the countywide parcel set. Remember: we are trying to find the parcels within the county (`parcels_df`) that are within TriCOG's operating boundaries (`tricog_df`).<br><br> With that goal in mind, which file would be the base layer, and which file would be the overlay layer? Select your response below and click 'run' to try it out.",
                 'part_two': 
-                      f""""""
+                      f""
                 },
         }
     }
@@ -2478,7 +2529,8 @@ def _(
                 residential_parcels = assessments_df[(assessments_df['CLASSDESC']=='RESIDENTIAL') & (assessments_df['USEDESC']=='SINGLE FAMILY')]
                 mo.output.replace_at_index(f"""Correct!""", 1)
                 set_residential_filter_state(True)
-            else: 
+            else:
+                set_residential_filter_state(False)
                 residential_filtering_response = incorrect_answer_text_generator(residential_text_box_final_classdesc_usedesc_filter.value, residential_classdesc_and_usedesc_code_snippet, get_residential_filter_incorrect_count())
                 mo.output.replace_at_index(f"""{residential_filtering_response[0]}""",1)
 
@@ -2503,7 +2555,7 @@ def _(
     return (residential_parcels,)
 
 
-@app.cell(hide_code=True)
+@app.cell
 def residential_path_end(
     get_attempted_text_first,
     get_residential_filter_state,
