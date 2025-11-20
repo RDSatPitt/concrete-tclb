@@ -116,7 +116,9 @@ def constant_text():
 @app.cell
 def _(mo):
 
-    data_host = "https://rds-concrete.com/data"
+    # data_host = "https://rds-concrete.com/data"
+    data_host = mo.notebook_location() / "data"
+    data_host = str(data_host)
 
     PARCELS_PATH = f"{data_host}/parcels.geojson"
     ASSESSMENTS_PATH = f"{data_host}/assessments.csv"
