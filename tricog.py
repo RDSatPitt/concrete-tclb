@@ -115,12 +115,16 @@ def constant_text():
 
 @app.cell
 def _(mo):
-    PARCELS_PATH = str(mo.notebook_location() / "data" / "parcels.geojson")
-    ASSESSMENTS_PATH = str(mo.notebook_location() / "data" / "assessments.csv")
-    LIENS_PATH = str(mo.notebook_location() / "data" / "liens.csv")
-    TRICOG_PATH = str(mo.notebook_location() / "data" / "tricog_footprint.geojson")
-    OVERLAY_LAYER = str(mo.notebook_location() / "data" / "overlay_layer.geojson")
-    OAKLAND_PARCELS_PATH = str(mo.notebook_location() / "data" / "oakland_parcels.geojson")
+
+    data_host = "https://rds-concrete.s3.us-east-1.amazonaws.com/data"
+
+    PARCELS_PATH = f"{data_host}/parcels.geojson"
+    ASSESSMENTS_PATH = f"{data_host}/assessments.csv"
+    LIENS_PATH = f"{data_host}/liens.csv"
+    TRICOG_PATH = f"{data_host}/tricog_footprint.geojson"
+    OVERLAY_LAYER = f"{data_host}/overlay_layer.geojson"
+    OAKLAND_PARCELS_PATH = f"{data_host}/oakland_parcels.geojson"
+
     TRICOG_OVER_PARCELS_IMG_PATH = str(mo.notebook_location() / "images" / "tricog_over_parcels.png")
     ALL_PARCELS_IMG_PATH = str(mo.notebook_location() / "images" / "ac_parcels.png")
     OAKLAND_PARCELS_IMG_PATH = str(mo.notebook_location() / "images" / "oakland_parcels.png")
@@ -129,8 +133,9 @@ def _(mo):
     PARCELS_CLIPPED_TO_TRICOG_IMG_PATH = str(mo.notebook_location() / "images" / "parcels_clipped_to_tricog.png")
     TRICOG_CLIPPED_TO_PARCELS_IMG_PATH = str(mo.notebook_location() / "images" / "tricog_clipped_to_parcels.png")
     TRICOG_BASE_PARCEL_OVERLAY_IMG_PATH = str(mo.notebook_location() / "images" / "tricog_base_parcel_overlay.png")
-    CLIPPED_PARCELS_PATH = str(mo.notebook_location() / "data" / "clipped_parcels.geojson")
-    CLIPPED_PARCELS_TRICOG_BASE_PATH = str(mo.notebook_location() / "data" / "clipped_parcels_tricog_base.geojson")
+
+    CLIPPED_PARCELS_PATH = f"{data_host}/clipped_parcels.geojson"
+    CLIPPED_PARCELS_TRICOG_BASE_PATH = f"{data_host}/clipped_parcels_tricog_base.geojson"
     return (
         ALL_PARCELS_IMG_PATH,
         ARROW_IMAGE_PATH,
