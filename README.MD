@@ -40,11 +40,6 @@ pip install r- requirements.txt
     │   ├── liens.csv
     │   ├── parcels.geojson
     │   └── tricog_footprint.geojson
-    ├── images/
-    │   ├── ac_parcels.png
-    │   ├── clipped_parcels.png
-    │   ├── oakland_parcels.png
-    │   └── tricog_over_parcels.png
     └── .env
 ```
 
