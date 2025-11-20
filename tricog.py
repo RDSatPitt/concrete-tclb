@@ -13,10 +13,8 @@ def _():
 @app.cell
 async def _(micropip):
     await micropip.install("folium")
-    await micropip.install("matplotlib")
     await micropip.install("mapclassify")
 
-    import matplotlib.pyplot as plt
     # import geopandas as gp
     return
 
