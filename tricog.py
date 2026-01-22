@@ -563,7 +563,7 @@ def display_begin_button(begin_button, get_begin_button, mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     ASSESSMENTS_PATH,
     assessments_file_expected_code,
@@ -988,8 +988,12 @@ def tricog_boundary_text_boxes(
 
     tricog_geo_path_clip_function_parcel_length = mo.ui.text(full_width=True).form(clear_on_submit=True)
     tricog_geo_path_clip_function_clip_output_length = mo.ui.text(full_width=True).form(clear_on_submit=True)
-    tricog_geo_path_oakland_clip_expectations = mo.ui.text(full_width=True).form(clear_on_submit=True,
-                                                                                 on_change=set_geo_path_oakland_clip_expectations)
+    tricog_geo_path_oakland_clip_expectations = mo.ui.text(
+        full_width=True, 
+        label="**What will the output from clipping the Oakland parcels with the circular overlay look like?**").form(
+            clear_on_submit=True,
+            on_change=set_geo_path_oakland_clip_expectations
+        )
     tricog_geo_path_post_clip_parcel_count_guess_box = mo.ui.text(full_width=False).form(clear_on_submit=True,
                                                                                          validate=parcel_guess_validation,
                                                                                          on_change=set_tricog_geo_path_parcel_count_guess)
@@ -1067,6 +1071,11 @@ def tricog_boundary_getters_setters(mo):
     get_tricog_text_path_cell_two, set_tricog_text_path_cell_two = mo.state(False)
     get_tricog_text_learn_text_box, set_tricog_text_path_learn_text_box = mo.state(False)
     get_tricog_text_output_survey, set_tricog_text_output_survey = mo.state(False)
+
+    get_tricog_text_path_cell_two, set_tricog_text_path_cell_two = mo.state(False)
+    get_tricog_text_question_box_cell_two, set_tricog_text_question_box_cell_two = mo.state(False)
+    get_tricog_text_question_box_cell_three, set_tricog_text_question_box_cell_three = mo.state(False)
+    get_tricog_text_path_cell_three, set_tricog_text_path_cell_three = mo.state(False)
     return (
         get_attempted_text_first,
         get_tricog_clip_parcels_button,
@@ -1077,7 +1086,11 @@ def tricog_boundary_getters_setters(mo):
         get_tricog_geo_path_cell_two,
         get_tricog_text_output_survey,
         get_tricog_text_path_cell_one,
+        get_tricog_text_path_cell_three,
+        get_tricog_text_path_cell_two,
         get_tricog_text_path_radio_buttons,
+        get_tricog_text_question_box_cell_three,
+        get_tricog_text_question_box_cell_two,
         get_view_clipped_parcels_df,
         set_attempted_text_first,
         set_tricog_clip_parcels_button,
@@ -1089,8 +1102,12 @@ def tricog_boundary_getters_setters(mo):
         set_tricog_geo_path_parcel_count_guess,
         set_tricog_text_output_survey,
         set_tricog_text_path_cell_one,
+        set_tricog_text_path_cell_three,
+        set_tricog_text_path_cell_two,
         set_tricog_text_path_learn_text_box,
         set_tricog_text_path_radio_buttons,
+        set_tricog_text_question_box_cell_three,
+        set_tricog_text_question_box_cell_two,
         set_view_clipped_parcels_df,
     )
 
@@ -1104,7 +1121,11 @@ def tricog_boundary_handlers(
     set_tricog_geo_path_cell_one,
     set_tricog_text_output_survey,
     set_tricog_text_path_cell_one,
+    set_tricog_text_path_cell_three,
+    set_tricog_text_path_cell_two,
     set_tricog_text_path_radio_buttons,
+    set_tricog_text_question_box_cell_three,
+    set_tricog_text_question_box_cell_two,
 ):
     # tricog_boundary_section
 
@@ -1150,10 +1171,15 @@ def tricog_boundary_handlers(
 
     def handle_tricog_text_path_dead_end_button(value):
         set_tricog_text_path_cell_one(False)
-        set_tricog_geo_path_cell_one(True)
-        set_attempted_text_first(True)
+        set_tricog_text_path_cell_two(False)
+        set_tricog_text_question_box_cell_two(False)
+        set_tricog_text_question_box_cell_three(False)
+        set_tricog_text_path_cell_three(False)
         set_tricog_text_path_radio_buttons(False)
         set_tricog_text_output_survey(False)
+        set_tricog_geo_path_cell_one(True)
+        set_attempted_text_first(True)
+
 
     def handle_tricog_text_len():
         if selected_clip_output:
@@ -1190,7 +1216,7 @@ def tricog_boundary_buttons(
     tricog_geo_path_tricog_as_overlay_button = mo.ui.button(label="output_parcels = gp.clip(parcels_df, tricog_df)",
                                                             value='parcel_base', on_change=handle_tricog_clip_button)
 
-    view_clipped_parcels_button = mo.ui.run_button(label="View `clipped_parcels` dataframe",
+    view_clipped_parcels_button = mo.ui.run_button(label="View `clipped_oakland_parcels` dataframe",
                                                    on_change=set_view_clipped_parcels_df)
 
     text_analysis_btn = mo.ui.button(label="Use Text Analysis", value="TEXT", on_click=handle_tricog_path_selection)
@@ -1288,7 +1314,7 @@ def _(get_attempted_text_first, mo, municipal_analysis_form, view_analysis):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     # text options for tricog path
 
@@ -1323,6 +1349,12 @@ def _():
     return (tricog_text,)
 
 
+@app.cell
+def _(mo):
+    mo.Html('<div id="geospatial_analysis"></div>')
+    return
+
+
 @app.cell(hide_code=True)
 def tricog_path_header(
     get_tricog_geo_path_cell_one,
@@ -1343,12 +1375,13 @@ def tricog_path_header(
         )
     else:
         mo.output.clear()
-    return tricog_geo_path_cell_one, tricog_text_path_cell_one
+    return (tricog_geo_path_cell_one,)
 
 
-@app.cell(hide_code=True)
+@app.cell
 def tricog_path_cell_1(
     get_attempted_text_first,
+    get_tricog_text_path_cell_one,
     handle_tricog,
     m,
     mo,
@@ -1357,18 +1390,16 @@ def tricog_path_cell_1(
     tricog_df,
     tricog_geo_path_cell_one,
     tricog_municipality_name_expected_code,
-    tricog_municipality_name_text_box,
     tricog_text,
-    tricog_text_path_cell_one,
 ):
     # tricog path, text choice, cell 1
 
-    mo.stop(not tricog_text_path_cell_one and not tricog_geo_path_cell_one)
+    mo.stop(not get_tricog_text_path_cell_one() and not tricog_geo_path_cell_one)
     tricog_text_path_cell_two = False
     # tricog_geo_path_cell_two = False 
 
     # text analysis path
-    if tricog_text_path_cell_one:
+    if get_tricog_text_path_cell_one():
         mo.output.replace(
             mo.vstack(
                 [
@@ -1380,22 +1411,10 @@ def tricog_path_cell_1(
 
                     Type the following code into the text entry box as it appears and hit 'Submit'<br>
                     `tclb_municipalities = {tricog_municipality_name_expected_code}`"""),
-                    mo.hstack([
-                        mo.md(f"""`tclb_municipalities = `"""), tricog_municipality_name_text_box,
-                    ], gap=0, justify="space-around", align='center', widths=[1, 5]),
                 ]
             )
         )
 
-        tricog_muni_user_text_entry = tricog_municipality_name_text_box.value
-        if tricog_muni_user_text_entry:
-            if tricog_muni_user_text_entry == tricog_municipality_name_expected_code:
-                tclb_municipalities = list(set(tricog_df.NAME))
-                tclb_municipalities.sort()
-                mo.output.replace_at_index("Correct!", 1)
-                tricog_text_path_cell_two = True
-            else:
-                mo.output.append("Try again")
 
     # geo analysis path
     elif tricog_geo_path_cell_one:
@@ -1410,19 +1429,51 @@ def tricog_path_cell_1(
                 ]))
     else:
         mo.output.clear()
-    return tclb_municipalities, tricog_text_path_cell_two
+    return
+
+
+@app.cell
+def _(
+    get_tricog_text_path_cell_one,
+    mo,
+    set_tricog_text_path_cell_two,
+    tricog_df,
+    tricog_municipality_name_expected_code,
+    tricog_municipality_name_text_box,
+):
+    mo.stop(not get_tricog_text_path_cell_one())
+
+    if get_tricog_text_path_cell_one(): 
+        mo.output.replace(
+            mo.hstack(
+                [
+                    mo.md(f"""`tclb_municipalities = `"""), tricog_municipality_name_text_box,
+                ], 
+                gap=0, justify="space-around", align='center', widths=[1, 5]
+            )
+        )
+
+        tricog_muni_user_text_entry = tricog_municipality_name_text_box.value
+        if tricog_muni_user_text_entry:
+            if tricog_muni_user_text_entry == tricog_municipality_name_expected_code:
+                tclb_municipalities = list(set(tricog_df.NAME))
+                tclb_municipalities.sort()
+                mo.output.replace_at_index("Correct!", 1)
+                set_tricog_text_path_cell_two(True)
+            else:
+                mo.output.append("Try again")
+
+    else: 
+        mo.output.clear()
+    return (tclb_municipalities,)
 
 
 @app.cell(hide_code=True)
 def _(
     get_oakland_overlay_counter,
-    gp,
     incorrect_answer_text_generator,
     mo,
     oakland_overlay_expected_output,
-    oakland_parcels_df,
-    overlay,
-    pd,
     set_tricog_geo_path_1a,
     strip_string,
     tricog_geo_path_cell_one,
@@ -1449,8 +1500,8 @@ def _(
             oakland_overlay_input = tricog_geo_path_text_box_oakland_clip_demo.value
             oakland_overlay_expected_output_stripped = strip_string(oakland_overlay_expected_output)
             if strip_string(oakland_overlay_input) == oakland_overlay_expected_output_stripped:
-                clipped_oakland_parcels = gp.clip(oakland_parcels_df, overlay)
-                clipped_oakland_parcels_df = pd.DataFrame(clipped_oakland_parcels.astype({'geometry': 'str'}))
+                # clipped_oakland_parcels = gp.clip(oakland_parcels_df, overlay)
+                # clipped_oakland_parcels_df = pd.DataFrame(clipped_oakland_parcels.astype({'geometry': 'str'}))
                 set_tricog_geo_path_1a(True)
                 mo.output.replace_at_index(f"""Correct!""", 1)
             else:
@@ -1460,18 +1511,23 @@ def _(
                 mo.output.replace_at_index(f"""{oakland_overlay_output_response[0]}""", 1)
     else:
         mo.output.clear()
-    return clipped_oakland_parcels, clipped_oakland_parcels_df
+    return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def tricog_path_cell_1a_clipping(
     get_tricog_geo_path_1a,
+    gp,
     mo,
+    oakland_parcels_df,
+    overlay,
+    pd,
     tricog_text,
     view_clipped_parcels_button,
 ):
     mo.stop(not get_tricog_geo_path_1a())
-
+    clipped_oakland_parcels = gp.clip(oakland_parcels_df, overlay)
+    clipped_oakland_parcels_df = pd.DataFrame(clipped_oakland_parcels.astype({'geometry': 'str'}))
     if get_tricog_geo_path_1a():
         mo.output.replace(
             mo.vstack([
@@ -1482,7 +1538,7 @@ def tricog_path_cell_1a_clipping(
         )
     else:
         mo.output.clear()
-    return
+    return clipped_oakland_parcels, clipped_oakland_parcels_df
 
 
 @app.cell(hide_code=True)
@@ -1497,7 +1553,7 @@ def _(clipped_oakland_parcels_df, get_view_clipped_parcels_df, mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     get_tricog_geo_path_1a,
     mo,
@@ -1653,7 +1709,7 @@ def _(tricog_geo_path_post_clip_parcel_count_guess_box):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def tricog_path_cell_2(
     assessments_df,
     clipped_parcels_df,
@@ -1663,16 +1719,15 @@ def tricog_path_cell_2(
     get_tricog_clip_parcels_button,
     get_tricog_clip_tricog_button,
     get_tricog_geo_path_cell_two,
+    get_tricog_text_path_cell_two,
     mo,
-    tricog_text_path_box_countywide_muni_name_list,
-    tricog_text_path_cell_two,
 ):
-    mo.stop(not tricog_text_path_cell_two and not get_tricog_geo_path_cell_two())
+    mo.stop(not get_tricog_text_path_cell_two() and not get_tricog_geo_path_cell_two())
     tricog_text_question_box_two_bool = False
     tricog_geo_question_box_two_bool = False
     begin_residential_path = False
 
-    if tricog_text_path_cell_two:
+    if get_tricog_text_path_cell_two():
         mo.output.replace(
             mo.vstack(
                 [
@@ -1681,21 +1736,10 @@ def tricog_path_cell_2(
                     assessments_df,
                     mo.md(f"""The size of the spreadsheet makes it hard to get a sense of what the values in that column are. Let's take a look at a de-duplicated list of values from that column. But using three lines of code, we can get a nice, short sample of unique names in the MUNIDESC field. 
                     <br><br>To start, enter the code below and hit 'Submit' to take the first step, which isolates the MUNICDESC column, removes all duplicates, and converts it to a list that we can reorder and subsample. """),
-                    mo.md(f"""`munidesc = {countywide_municipality_name_list}`"""),
-                    mo.hstack([
-                        mo.md(f"""`munidesc = `"""), tricog_text_path_box_countywide_muni_name_list,
-                    ], gap=0, justify="space-around", align='center', widths=[1, 7]),
+                    mo.md(f"""`munidesc = {countywide_municipality_name_list}`"""),  
                 ]
             )
         )
-
-        if tricog_text_path_box_countywide_muni_name_list.value:
-            if tricog_text_path_box_countywide_muni_name_list.value == countywide_municipality_name_list:
-                mo.output.replace_at_index('Correct!', 1)
-                munidesc = list(set(assessments_df.MUNIDESC))
-                tricog_text_question_box_two_bool = True
-            else:
-                mo.output.append('Try again!')
     elif get_tricog_geo_path_cell_two():
         if get_tricog_clip_parcels_button():
             selected_clipped_df = clipped_parcels_df
@@ -1729,12 +1773,42 @@ def tricog_path_cell_2(
         )
     else:
         mo.output.clear()
-    return (
-        begin_residential_path,
-        munidesc,
-        tricog_geo_question_box_two_bool,
-        tricog_text_question_box_two_bool,
-    )
+    return begin_residential_path, tricog_geo_question_box_two_bool
+
+
+@app.cell
+def _(
+    assessments_df,
+    countywide_municipality_name_list,
+    get_tricog_text_path_cell_two,
+    mo,
+    set_tricog_text_question_box_cell_two,
+    tricog_text_path_box_countywide_muni_name_list,
+):
+    mo.stop(not get_tricog_text_path_cell_two())
+
+    if get_tricog_text_path_cell_two():
+        mo.output.replace(
+            mo.hstack(
+                [
+                    mo.md(f"""`munidesc = `"""), tricog_text_path_box_countywide_muni_name_list,
+                ], 
+                gap=0, 
+                justify="space-around", 
+                align='center', 
+                widths=[1, 7]
+            ),
+        )
+        if tricog_text_path_box_countywide_muni_name_list.value:
+            if tricog_text_path_box_countywide_muni_name_list.value == countywide_municipality_name_list:
+                munidesc = list(set(assessments_df.MUNIDESC))
+                mo.output.replace_at_index('Correct!', 1)
+                set_tricog_text_question_box_cell_two(True)
+            else:
+                mo.output.append('Try again!')
+    else: 
+        mo.output.clear()
+    return (munidesc,)
 
 
 @app.cell(hide_code=True)
@@ -1742,18 +1816,19 @@ def tricog_path_cell_2a(
     clip_function_clip_output_length_code,
     clipped_parcels,
     countywide_municipality_name_list_sorted,
+    get_tricog_text_question_box_cell_two,
     mo,
     munidesc,
     parcels_df,
+    set_tricog_text_question_box_cell_three,
     tricog_geo_path_clip_function_clip_output_length,
     tricog_geo_question_box_two_bool,
     tricog_text_path_box_countywide_muni_name_list_sorted,
-    tricog_text_question_box_two_bool,
 ):
-    mo.stop(not tricog_text_question_box_two_bool and not tricog_geo_question_box_two_bool)
+    mo.stop(not get_tricog_text_question_box_cell_two() and not tricog_geo_question_box_two_bool)
     tricog_text_question_box_three_bool = False
 
-    if tricog_text_question_box_two_bool:
+    if get_tricog_text_question_box_cell_two():
         mo.output.replace(
             mo.vstack(
                 [
@@ -1768,7 +1843,7 @@ def tricog_path_cell_2a(
             if tricog_text_path_box_countywide_muni_name_list_sorted.value == countywide_municipality_name_list_sorted:
                 mo.output.replace_at_index('Correct!', 1)
                 munidesc.sort()
-                tricog_text_question_box_three_bool = True
+                set_tricog_text_question_box_cell_three(True)
             else:
                 mo.output.append('Try again!')
     elif tricog_geo_question_box_two_bool:
@@ -1792,22 +1867,20 @@ def tricog_path_cell_2a(
         mo.output.clear()
         parcel_length_code = "f''"
         clip_length_code = "f'length of clipped_parcels: {len(clipped_parcels)}'"
-    return (tricog_text_question_box_three_bool,)
+    return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def tricog_path_cell_2b(
+    get_tricog_text_question_box_cell_three,
     mo,
     munidesc,
     tclb_municipalities,
-    tricog_text_path_list_difference_text_box,
-    tricog_text_question_box_three_bool,
-    tricog_text_question_box_two_bool,
 ):
-    mo.stop(not tricog_text_question_box_three_bool)
+    mo.stop(not get_tricog_text_question_box_cell_three())
     tricog_text_path_cell_three = False
 
-    if tricog_text_question_box_two_bool:
+    if get_tricog_text_question_box_cell_three():
         mo.output.replace(
             mo.vstack(
                 [
@@ -1837,28 +1910,45 @@ def tricog_path_cell_2b(
                     We can see that both dataframes have some of the same municipality names, such as Clairton and McKeesport. If \
                     the data is about the same municipalities, why are the list contents formatted differently? Enter your thoughts \
                     into the box and hit `Submit`.<br>"""),
-                    tricog_text_path_list_difference_text_box,
                 ]
             )
         )
-        if tricog_text_path_list_difference_text_box.value:
-            tricog_text_path_cell_three = True
     else:
         mo.output.clear()
-    return (tricog_text_path_cell_three,)
+    return
+
+
+@app.cell
+def _(
+    get_tricog_text_question_box_cell_three,
+    mo,
+    set_tricog_text_path_cell_three,
+    tricog_text_path_list_difference_text_box,
+):
+    mo.stop(not get_tricog_text_question_box_cell_three())
+
+    if get_tricog_text_question_box_cell_three(): 
+        mo.output.replace(
+            tricog_text_path_list_difference_text_box
+        )
+        if tricog_text_path_list_difference_text_box.value:
+            set_tricog_text_path_cell_three(True)
+    else:
+        mo.output.clear()
+    return
 
 
 @app.cell(hide_code=True)
 def _(
+    get_tricog_text_path_cell_three,
     mo,
     set_tricog_text_path_radio_buttons,
     tricog_text_path_can_we_do_it_radio_buttons,
-    tricog_text_path_cell_three,
     tricog_text_path_list_difference_text_box,
 ):
-    mo.stop(not tricog_text_path_cell_three)
+    mo.stop(not get_tricog_text_path_cell_three())
 
-    if tricog_text_path_cell_three:
+    if get_tricog_text_path_cell_three():
         mo.output.replace(
             mo.vstack(
                 [
@@ -1887,12 +1977,11 @@ def _(
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     get_tricog_text_path_radio_buttons,
     mo,
     tricog_text_path_can_we_do_it_radio_buttons,
-    tricog_text_path_output_survey,
 ):
     mo.stop(not get_tricog_text_path_radio_buttons())
     tricog_text_path_radio_button_response = ""
@@ -1914,7 +2003,6 @@ def _(
                     doing so has the silver lining of helping you learn something new. Look at the list below and select any of the \
                     following items that you learned through this text-analysis process. You can also add your own in the text entry \
                     box. """),
-                    tricog_text_path_output_survey,
                 ]
             )
         )
@@ -1923,19 +2011,42 @@ def _(
     return
 
 
-@app.cell(hide_code=True)
-def _(geo_analysis_btn, get_tricog_text_output_survey, mo):
-    mo.stop(not get_tricog_text_output_survey())
+@app.cell
+def _(get_tricog_text_path_radio_buttons, mo, tricog_text_path_output_survey):
+    mo.stop(not get_tricog_text_path_radio_buttons())
 
-    mo.output.replace(
-        mo.vstack(
-            [
-                mo.md(
-                    f"""Now that we've exhausted this path and reflected on what we learned, it may be time to try the geographic analysis path. Click the button below to begin that task.<br><br>"""),
-                geo_analysis_btn.center()
-            ]
+    if get_tricog_text_path_radio_buttons():
+        mo.output.replace(
+            tricog_text_path_output_survey
         )
-    )
+    else:
+        mo.output.clear()
+    return
+
+
+@app.cell
+def _(
+    geo_analysis_btn,
+    get_tricog_text_output_survey,
+    mo,
+    tricog_geo_path_cell_one,
+):
+    mo.stop(not get_tricog_text_output_survey() and not tricog_geo_path_cell_one)
+
+    geo_analysis_btn_with_link = mo.md(f"""<a href=#geospatial_analysis>""""""{geo_analysis_btn}</a>""").batch(geo_analysis_btn=geo_analysis_btn)
+
+    if get_tricog_text_output_survey():
+        mo.output.replace(
+            mo.vstack(
+                [
+                    mo.md(
+                        f"""Now that we've exhausted this path and reflected on what we learned, it may be time to try the geographic analysis path. Click the button below to begin that task.<br><br>"""),
+                    geo_analysis_btn_with_link.center()
+                ]
+            )
+        )
+    else:
+        mo.output.clear()
     return
 
 
@@ -2823,6 +2934,7 @@ def abandoned_path_prep(
     set_abandoned_path_iteration_2,
     set_abandoned_path_iteration_3,
     set_abandoned_path_iteration_4,
+    set_abandoned_path_iteration_6,
     set_abandoned_path_iteration_lien_column_counter,
     set_abandoned_path_iteration_parcels_counter,
     set_abandoned_path_join_0,
@@ -2852,6 +2964,7 @@ def abandoned_path_prep(
     # buttons
     abandoned_begin_button = mo.ui.run_button(label="Click to Begin", on_change=set_abandoned_path_1)
 
+
     # code snippets
     parcels_with_liens = "parcels_df[parcels_df['PIN'].isin(liens_df['pin'])]"
     abandoned_pd_merge_code_snippet = "pd.merge(left=parcels_df, right=liens_df, left_on='PIN', right_on='pin', how='inner')"
@@ -2873,12 +2986,14 @@ def abandoned_path_prep(
 
     def handle_abandoned_path_selection(value):
         if (value == "JOIN"):
+            set_abandoned_path_iteration_6(False)
             set_abandoned_path_join_0(True)
             reset_abandoned_paths('join')
             return "JOIN"
         if (value == "ITERATION"):
             set_abandoned_iteration_path_1(True)
             set_abandoned_join_path_1(False)
+            reset_abandoned_paths('iteration')
             return "ITERATION"
 
     abandoned_iteration_button = mo.ui.button(
@@ -2890,6 +3005,12 @@ def abandoned_path_prep(
         label="Use Joins to Combine Dataframes",
         value="JOIN",
         on_click=handle_abandoned_path_selection
+    )
+
+    abandoned_join_button_with_link = mo.md(
+        f"""<a href=#joins>""""""{abj}</a>"""
+    ).batch(
+        abj=abandoned_join_button
     )
 
     def fake_iteration():
@@ -2913,7 +3034,7 @@ def abandoned_path_prep(
         abandoned_iteration_text_box_adding_lien_column,
         abandoned_iteration_text_box_code_block,
         abandoned_iteration_text_box_parcels_with_liens,
-        abandoned_join_button,
+        abandoned_join_button_with_link,
         fake_iteration,
         parcels_with_liens,
     )
@@ -3110,6 +3231,12 @@ def _(abandoned_analysis_form, get_abandoned_file_selection_state, mo):
 
 
 @app.cell
+def _(mo):
+    mo.Html("<div id='joins'></div>")
+    return
+
+
+@app.cell
 def _(
     get_abandoned_path_iteration_0,
     get_abandoned_path_join_0,
@@ -3254,6 +3381,7 @@ def _(
                     sample_output
                 )
             else:
+                set_abandoned_path_join_3(False)
                 mo.output.replace(
                     mo.vstack(
                         [
@@ -3292,16 +3420,13 @@ def _(
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
-    abandoned_iteration_iteration_code_block_no_spaces,
-    abandoned_iteration_text_box_code_block,
     abandoned_post_join_selector_reflection,
     filtered_parcels_df_liens_col,
     get_abandoned_path_iteration_3,
     get_abandoned_path_join_3,
     mo,
-    strip_string,
 ):
     mo.stop(not get_abandoned_path_join_3() and not get_abandoned_path_iteration_3())
 
@@ -3326,9 +3451,27 @@ def _(
                 `for idx, row in parcels_df_with_liens.iterrows():`<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;`amount = liens_df[liens_df['pin']==row.PIN].total_amount.values[0]`<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;`parcels_df_with_liens.at[idx, 'lien_amount']= amount`"""),
-                    abandoned_iteration_text_box_code_block
                 ]
             )
+        )
+    else:
+        mo.output.clear()
+    return
+
+
+@app.cell
+def _(
+    abandoned_iteration_iteration_code_block_no_spaces,
+    abandoned_iteration_text_box_code_block,
+    get_abandoned_path_iteration_3,
+    mo,
+    strip_string,
+):
+    mo.stop(not get_abandoned_path_iteration_3())
+
+    if get_abandoned_path_iteration_3(): 
+        mo.output.replace(
+            abandoned_iteration_text_box_code_block
         )
         if abandoned_iteration_text_box_code_block.value:
             if strip_string(abandoned_iteration_text_box_code_block.value) == strip_string(
@@ -3379,9 +3522,14 @@ def _(abandoned_end_of_iteration_form, get_abandoned_path_iteration_5, mo):
     return
 
 
+@app.cell
+def _():
+    return
+
+
 @app.cell(hide_code=True)
 def _(
-    abandoned_join_button,
+    abandoned_join_button_with_link,
     filtered_parcels_df,
     get_abandoned_path_iteration_6,
     liens_df,
@@ -3397,7 +3545,7 @@ def _(
                         f"""Even though we filtered `parcels_df` to get rid of extra rows, our filtered version still had {len(filtered_parcels_df)}. The `liens_df` had {len(liens_df)} rows. That means that for every one of the {len(filtered_parcels_df)} rows in `filtered_parcels_df`, it had to check {len(liens_df)} rows to make sure the value wasn't there."""),
                     mo.md(
                         f"""And while there are a number of different things we could do to try and speed that process up, using a join is a good alternative to iterating through a dataframe. Click the button below to learn more about joins and how to implement them on these dataframes."""),
-                    abandoned_join_button.center()
+                    abandoned_join_button_with_link.center()
                 ]
             )
         )
@@ -3524,18 +3672,7 @@ def _(combining_files_survey_form, get_combining_files_0, mo):
 
 
 @app.cell
-def _(
-    clipped_parcels,
-    combining_path_clipped_and_single_family_join,
-    combining_path_text_box_clipped_and_residential,
-    get_clipped_residential_count,
-    get_combining_files_1,
-    incorrect_answer_text_generator,
-    mo,
-    pd,
-    residential_parcels,
-    strip_string,
-):
+def _(get_combining_files_1, mo):
     mo.stop(not get_combining_files_1())
 
     if get_combining_files_1():
@@ -3553,10 +3690,40 @@ def _(
         **3.** The column we'll use for joining from `clipped_parcels` is "PIN". The column we'll need from `residential_parcels` is "PARID".<br><br>
 
         Type the code into the box below and hit 'Submit'.<br>"""),
-                    mo.hstack([mo.md(f"""**clipped_and_residential_parcels  =**"""),
-                               combining_path_text_box_clipped_and_residential], gap=0, justify='space-around',
-                              align='center', widths=[1, 4])
                 ]
+            )
+        )
+    else:
+        mo.output.clear()
+    return
+
+
+@app.cell
+def _(
+    clipped_parcels,
+    combining_path_clipped_and_single_family_join,
+    combining_path_text_box_clipped_and_residential,
+    get_clipped_residential_count,
+    get_combining_files_1,
+    incorrect_answer_text_generator,
+    mo,
+    pd,
+    residential_parcels,
+    strip_string,
+):
+    mo.stop(not get_combining_files_1())
+
+    if get_combining_files_1(): 
+        mo.output.replace(
+            mo.hstack(
+                [
+                    mo.md(f"""**clipped_and_residential_parcels  =**"""),
+                    combining_path_text_box_clipped_and_residential
+                ], 
+                gap=0, 
+                justify='space-around',
+                align='center', 
+                widths=[1, 4]
             )
         )
         if combining_path_text_box_clipped_and_residential.value:
@@ -3571,6 +3738,8 @@ def _(
                                                                                        combining_path_clipped_and_single_family_join,
                                                                                        get_clipped_residential_count())
                 mo.output.replace_at_index(f"""{clipped_residential_incorrect_output[0]}""", 1)
+    else: 
+        mo.output.clear()
     return
 
 
@@ -3583,13 +3752,14 @@ def _(
     pd,
     residential_parcels,
 ):
+
     mo.stop(not get_combining_files_0())
 
     clipped_and_residential_parcels = pd.merge(left=clipped_parcels,
                                                right=residential_parcels[['PARID', 'CLASSDESC', 'USEDESC']],
                                                left_on='PIN', right_on='PARID')
     final_output = pd.merge(left=clipped_and_residential_parcels,
-                            right=parcels_df_with_joined_liens[['PIN', 'total_amount']], left_on='PIN', right_on='PIN')
+                            right=parcels_df_with_joined_liens[['PIN', 'total_amount']], left_on='PIN', right_on='PIN').astype({"geometry":"str"})
     return (final_output,)
 
 
@@ -3648,15 +3818,14 @@ def _(final_output, mo):
 
 
 @app.cell
-def _(final_output, get_combining_files_3, lien_slider, mo, pd):
+def _(final_output, get_combining_files_3, lien_slider, mo):
     mo.stop(not get_combining_files_3())
 
     if get_combining_files_3():
         mo.output.replace(
             mo.vstack(
                 [
-
-                    pd.DataFrame(final_output.astype({'geometry': 'str'})),
+                    final_output,
                     mo.md(f"""##Reflections"""),
                     mo.md(f"""After much work, we have arrived at this dataframe.<br><br> 
                     One of the difficult questions of working with large data is knowing whether or not an end product is correct. Take this dataframe, for example: is this output what we were looking for? Does it contain only properties that meet the stated requirements?<br><br>
