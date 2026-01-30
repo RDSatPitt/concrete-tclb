@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.0"
+__generated_with = "0.14.6"
 app = marimo.App(width="medium")
 
 
@@ -24,9 +24,10 @@ def imports():
     import marimo as mo
     import geopandas as gp
     import pandas as pd
+    import shapely.wkt
     import time
     import copy
-    return copy, gp, mo, pd, time
+    return copy, gp, mo, pd, shapely, time
 
 
 @app.cell(hide_code=True)
@@ -126,6 +127,7 @@ def _(mo):
 
 
     PARCELS_PATH = str(mo.notebook_location() / "data" / "parcels.geojson")
+    PARCELS_CSV_PATH = str(mo.notebook_location() / "data" / "parcels.csv")
     ASSESSMENTS_PATH = str(mo.notebook_location() / "data" / "assessments.csv")
     LIENS_PATH = str(mo.notebook_location() / "data"/ "liens.csv")
     TRICOG_PATH = str(mo.notebook_location() / "data"/ "tricog_footprint.geojson")
@@ -157,7 +159,7 @@ def _(mo):
         OAKLAND_PARCELS_PATH,
         OVERLAY_LAYER,
         PARCELS_CLIPPED_TO_TRICOG_IMG_PATH,
-        PARCELS_PATH,
+        PARCELS_CSV_PATH,
         TRICOG_BASE_PARCEL_OVERLAY_IMG_PATH,
         TRICOG_CLIPPED_TO_PARCELS_IMG_PATH,
         TRICOG_OVER_PARCELS_IMG_PATH,
@@ -306,7 +308,7 @@ def drop_down_forms():
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def getters_and_setters(mo):
     # global state
 
@@ -329,6 +331,7 @@ def getters_and_setters(mo):
     get_combined_data_step_two, set_combined_data_step_two = mo.state(False)
     get_start_analysis_button, set_start_analysis_button = mo.state(False)
     get_geo_path_oakland_clip_expectations, set_geo_path_oakland_clip_expectations = mo.state(False)
+    get_parcels_file_input_complete, set_parcels_file_input_complete = mo.state(False)
 
     # file_reading_section
     get_liens_counter, set_liens_counter = mo.state(0)
@@ -349,6 +352,7 @@ def getters_and_setters(mo):
         get_oakland_parcels_counter,
         get_oakland_parcels_state,
         get_parcels_counter,
+        get_parcels_file_input_complete,
         get_start_analysis_button,
         get_tricog_counter,
         set_begin_button,
@@ -363,6 +367,7 @@ def getters_and_setters(mo):
         set_oakland_parcels_counter,
         set_oakland_parcels_state,
         set_parcels_counter,
+        set_parcels_file_input_complete,
         set_start_analysis_button,
         set_tricog_counter,
     )
@@ -474,9 +479,7 @@ def title(mo):
 
 @app.cell(hide_code=True)
 def intro_text(mo):
-    mo.md(r"""
-    Congratulations on your new role with TriCOG Land Bank! You have been hired to assist their GIS and Data Analyst. Your task is to help the analyst identify homes that the Land Bank can purchase and make available as affordable housing. Please press one of four buttons immediately below for background information, or select "Click Here To Begin" to get started!
-    """)
+    mo.md(r"""Congratulations on your new role with TriCOG Land Bank! You have been hired to assist their GIS and Data Analyst. Your task is to help the analyst identify homes that the Land Bank can purchase and make available as affordable housing. Please press one of four buttons immediately below for background information, or select "Click Here To Begin" to get started!""")
     return
 
 
@@ -600,7 +603,7 @@ def _(
         if assessments_code_entry:
             if strip_string(assessments_file_expected_code) == strip_string(assessments_code_entry):
                 with mo.status.spinner(
-                        title="Reading in 'assessments_df.csv'",
+                        title="Reading in 'assessments.csv'",
                         subtitle="Please be patient, this may take a minute"
                 ) as _spinner:
                     assessments_df = pd.read_csv(ASSESSMENTS_PATH, low_memory=False)
@@ -618,10 +621,10 @@ def _(assessments_df, mo):
     #
     mo.output.replace(mo.vstack(
         [
-            mo.md(f"""##assessments.csv"""),
+            mo.md(f"""##assessments_df"""),
             assessments_df,
             mo.md(
-                f"""<br>The dataframe above is the `assessments.csv` file that was just read in. Notice that it has 86 columns and over 584,000 rows. This is a large file! Also notice the column on the far left is a column named `PARID`. This is the parcel identification number. That means that every row contains data about a different parcel. Finally, it's important to note that this file does not have any geospatial data in it; the contents are entirely descriptive; in other words, the file tells you details about the parcels, but it doesn't tell you where they are.<br>""")
+                f"""<br>The dataframe above is the `assessments.csv` file that was just read in and stored as `assessments_df`. Notice that it has 86 columns and over 584,000 rows. This is a large file! Also notice the column on the far left is a column named `PARID`. This is the parcel identification number. That means that every row contains data about a different parcel. Finally, it's important to note that this file does not have any geospatial data in it; the contents are entirely descriptive; in other words, the file tells you details about the parcels, but it doesn't tell you where they are.<br>""")
         ]
     ))
     return
@@ -683,10 +686,10 @@ def _(liens_df, mo):
     mo.output.replace(
         mo.vstack(
             [
-                mo.md(f"""##liens.csv"""),
+                mo.md(f"""##liens_df"""),
                 liens_df,
                 mo.md(
-                    f"""<br>`liens.csv` is a dataset that contains information about properties that have liens against them. You'll notice that this file also has a new parcel ID for each row, only in this file the column is labeled 'pin' (instead of 'PARID'). The three columns of note are the parcel ID, the number of liens a property has, and the total amount of money owed.""")
+                    f"""<br>`liens_df` (read from the file `liens.csv`) is a dataset that contains information about properties that have liens against them. You'll notice that this file also has a new parcel ID for each row, only in this file the column is labeled 'pin' (instead of 'PARID'). The three columns of note are the parcel ID, the number of liens a property has, and the total amount of money owed.""")
             ]
         )
     )
@@ -755,7 +758,7 @@ def _(mo, pd, tricog_df):
 
     mo.output.replace(
         mo.vstack([
-            mo.md(f"""##tricog.geojson"""),
+            mo.md(f"""##tricog_df"""),
             handle_tricog(tricog_df),
             mo.md(
                 f"""Unlike the other files we've looked at so far, `tricog.geojson` isn't organized at the parcel level. Instead, each row of this file represents a different municipality that is a member of the TriCOG land bank. Also unlike the other files, `tricog.geojson` has a column at the far right called 'geometry' that contains the shape of each municipality.<br><br>"""),
@@ -815,7 +818,7 @@ def _(exploration, mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     exploration,
     get_parcels_counter,
@@ -855,42 +858,86 @@ def _(
     return
 
 
-@app.cell(hide_code=True)
-def _(PARCELS_PATH, get_continue_on_to_parcels_geojson, gp, mo, pd):
-    continue_with_parcels_df_discussion = False
-    parcels_df = None
-    parcels_df_df = None
+@app.cell
+def _(
+    PARCELS_CSV_PATH,
+    get_continue_on_to_parcels_geojson,
+    gp,
+    mo,
+    pd,
+    set_parcels_file_input_complete,
+    shapely,
+):
     mo.stop(not get_continue_on_to_parcels_geojson())
+
+    mo.output.replace(
+        mo.md(f"""""")
+    )
 
     with mo.status.spinner(
             title="Reading in 'parcels.geojson'",
             subtitle="Please be patient, this may take a minute. Even longer than the others!"
     ) as _spinner:
-        parcels_df = gp.read_file(PARCELS_PATH)
-        parcels_df_df = pd.DataFrame(parcels_df)
-    test_text = ''
+        parcels_df_df = pd.read_csv(PARCELS_CSV_PATH)
+        parcels_geometry = parcels_df_df['geometry'].map(shapely.wkt.loads)
+        parcels_df = gp.GeoDataFrame(parcels_df_df, geometry=parcels_geometry)
+        set_parcels_file_input_complete(True)
+
+
+    return parcels_df, parcels_df_df
+
+
+@app.cell
+def read_in_parcels_file(get_parcels_file_input_complete, mo, parcels_df_df):
+    mo.stop(not get_parcels_file_input_complete())
 
     mo.output.replace(
         mo.vstack(
             [
-                mo.md(f"""##parcels.geojson"""),
+                mo.md(f"""##parcels_df"""),
                 parcels_df_df,
             ]
         )
     )
-    continue_with_parcels_df_discussion = True
-    return continue_with_parcels_df_discussion, parcels_df, parcels_df_df
+    return
+
+
+@app.cell
+def read_in_parcels_file_safety():
+    # continue_with_parcels_df_discussion = False
+    # parcels_df = None
+    # parcels_df_df = None
+    # mo.stop(not get_continue_on_to_parcels_geojson())
+
+    # with mo.status.spinner(
+    #         title="Reading in 'parcels.geojson'",
+    #         subtitle="Please be patient, this may take a minute. Even longer than the others!"
+    # ) as _spinner:
+    #     parcels_df = gp.read_file(PARCELS_PATH)
+    #     parcels_df_df = pd.DataFrame(parcels_df)
+    # test_text = ''
+
+    # mo.output.replace(
+    #     mo.vstack(
+    #         [
+    #             mo.md(f"""##parcels.geojson"""),
+    #             parcels_df_df,
+    #         ]
+    #     )
+    # )
+    # continue_with_parcels_df_discussion = True
+    return
 
 
 @app.cell(hide_code=True)
-def _(ALL_PARCELS_IMG_PATH, mo, parcels_df_df):
-    mo.stop(parcels_df_df is None)
+def _(ALL_PARCELS_IMG_PATH, get_parcels_file_input_complete, mo):
+    mo.stop(not get_parcels_file_input_complete())
 
     mo.output.replace(
         mo.vstack(
             [
                 mo.md(
-                    f"""Here we see the parcels.geojson dataframe. Unfortunately, the file is too large to use the explore function: doing so would likely make your browser crash. That said, if you load  the file into GIS software, it looks like this: <br>"""),
+                    f"""Here we see the parcels.geojson file, stored as `parcels_df`. Unfortunately, the file is too large to use the explore function: doing so would likely make your browser crash. That said, if you load  the file into GIS software, it looks like this: <br>"""),
                 mo.image(ALL_PARCELS_IMG_PATH),
             ]
         )
@@ -900,8 +947,8 @@ def _(ALL_PARCELS_IMG_PATH, mo, parcels_df_df):
 
 @app.cell(hide_code=True)
 def _(
-    continue_with_parcels_df_discussion,
     get_oakland_parcels_counter,
+    get_parcels_file_input_complete,
     incorrect_answer_text_generator,
     mo,
     oakland_parcel_expected_code,
@@ -910,7 +957,7 @@ def _(
     set_oakland_parcels_state,
     strip_string,
 ):
-    mo.stop(not continue_with_parcels_df_discussion)
+    mo.stop(not get_parcels_file_input_complete())
 
     oakland_parcels_user_entry = oakland_parcels_text_box.value
 
@@ -1210,10 +1257,10 @@ def tricog_boundary_buttons(
     set_view_clipped_parcels_df,
 ):
     # tricog_boundary_section
-    tricog_geo_path_parcels_as_overlay_button = mo.ui.button(label="output_parcels = gp.clip(tricog_df, parcels_df)",
+    tricog_geo_path_parcels_as_overlay_button = mo.ui.button(label="clipped_parcels = gp.clip(tricog_df, parcels_df)",
                                                              value='tricog_base', on_change=handle_tricog_clip_button)
 
-    tricog_geo_path_tricog_as_overlay_button = mo.ui.button(label="output_parcels = gp.clip(parcels_df, tricog_df)",
+    tricog_geo_path_tricog_as_overlay_button = mo.ui.button(label="clipped_parcels = gp.clip(parcels_df, tricog_df)",
                                                             value='parcel_base', on_change=handle_tricog_clip_button)
 
     view_clipped_parcels_button = mo.ui.run_button(label="View `clipped_oakland_parcels` dataframe",
@@ -1742,34 +1789,38 @@ def tricog_path_cell_2(
         )
     elif get_tricog_geo_path_cell_two():
         if get_tricog_clip_parcels_button():
-            selected_clipped_df = clipped_parcels_df
-            final_geo_output_text = mo.md(f"""The final number of rows is {len(clipped_parcels_df)}. That's significantly less than the 500,000 we started with. It looks like the `clip` function worked!<br><br>
+            clip_attempt_output = mo.vstack(
+                [
+                    mo.md(f"""###clipped_parcels"""),
+                    clipped_parcels_df,
+                    mo.md(f"""You've produced the dataframe `clipped_parcels` -- it looks like the `clip` function worked! The final number of rows is {len(clipped_parcels_df)}. That's significantly less than the 500,000 we started with.<br><br>
                     If you want to explore these clipped parcels on a map and you have GIS software, you can output the `clipped_parcels` variable using `GeoPandas`' `to_file()` command. The argument you would use in the function is the name you want the outputted file to have. Running the command: <br>
 
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`clipped_parcels.to_file("clipped_parcels_output.geojson")`
     <br><br>
                     would create a file in your current working directory called `clipped_parcels_output.geojson`. 
 
-                    Unfortunately, the specifics of using standalone GIS software to view the file are outside the scope of this lesson.""")
+                    Unfortunately, the specifics of using standalone GIS software to view the file are outside the scope of this lesson."""),
+                ]
+            )
             begin_residential_path = True
         if get_tricog_clip_tricog_button():
-            selected_clipped_df = clipped_parcels_tricog_base_df
-            final_geo_output_text = mo.md(f"""The final number of rows is {len(clipped_parcels_tricog_base)}. That number seems suspiciously low. If it also seems \
+            clip_attempt_output = mo.vstack(
+                [
+                    clipped_parcels_tricog_base_df,
+                    mo.md(f"""The final number of rows is {len(clipped_parcels_tricog_base)}. That number seems suspiciously low. If it also seems \
                     familiar, it's because it's the same number of municipalities within TriCOG's borders.<br><br>
                     Remember we said earlier than when you run the clip function, the output dataframe contains only matching data from \
                     the base layer. In this case, because you selected `tricog_df` as the base layer, the output only contains data that \
                     was from `tricog_df`. We were hoping that our output file would contain data about the parcels within these \ 
                     boundaries.<br><br>
                     Scroll back up and select the other clip function option (with `parcels_df` as the base layer) and see if that \ 
-                    makes a difference.""")
-            begin_residential_path = False
-        mo.output.replace(
-            mo.vstack(
-                [
-                    selected_clipped_df,
-                    final_geo_output_text,
+                    makes a difference."""),
                 ]
             )
+            begin_residential_path = False
+        mo.output.replace(
+            clip_attempt_output
         )
     else:
         mo.output.clear()
@@ -2065,7 +2116,18 @@ def residential_prep(handle_residential_filter, mo, set_residential_path_zero):
 
     # chat variable
     response_message = "I'm glad you asked! The assessments file is very large and confusing. You'll want to find parcels where the CLASSDESC value is 'RESIDENTIAL' and the USEDESC value is 'SINGLE FAMILY'."
+
+    def generate_usedesc_incorrect_singular_or_plural_text(usedesc_value_dict: dict[str, bool])->str:
+        usedesc_incorrect_responses_counter = 0
+        for a, b in usedesc_value_dict.items():
+            if b == True:
+                usedesc_incorrect_responses_counter += 1
+        if usedesc_incorrect_responses_counter == 1: 
+            return 'that makes'
+        else: 
+            return 'any of those make'
     return (
+        generate_usedesc_incorrect_singular_or_plural_text,
         residential_start_button,
         residential_text_box_final_classdesc_usedesc_filter,
         response_message,
@@ -2345,7 +2407,8 @@ def residential_path_cell_1(
 
         This seems like the sort of information that would be contained in the `assessments` file: remember, that file contains descriptive elements about the parcels in the county.<br> 
 
-        Let's take a quick look at the `assessments` dataframe again."""),
+        Let's take a quick look at the `assessments_df` dataframe again."""),
+                    mo.md(f"""###assessments_df"""),
                     assessments_df,
                 ]
             )
@@ -2602,6 +2665,7 @@ def _(
 
 @app.cell
 def _(
+    generate_usedesc_incorrect_singular_or_plural_text,
     get_residential_path_four_usedesc_b,
     lists_of_usedesc_checkbox_answers,
     mo,
@@ -2616,7 +2680,8 @@ def _(
             if len(good_answers) > 0:
                 good_answers_output_text = f"""Nice work! Values like `{good_answers[0]}` make sense as single-family residences.<br><br>"""
             else:
-                good_answers_output_text = f"""Hm...I'm not sure if any of those make sense as descriptions of single-family residences.  """
+                singular_or_plural_text = generate_usedesc_incorrect_singular_or_plural_text(usedesc_value_checkbox_form.value)
+                good_answers_output_text = f"""Hm...I'm not sure if {singular_or_plural_text} sense as descriptions of single-family residences.  """
             if len(missing_answers) > 0:
                 missing_answers_output_text = f"""What about `{missing_answers[0]}`, though? Could that be considered a single-family residence?  """
             else:
@@ -2754,7 +2819,7 @@ def residential_path_end(
     abandoned_path_zero = False
 
     if get_residential_filter_state():
-        residential_path_end_text = f"""You did it! Now we have a dataframe that contains all of the residential, single-family properties in the county."""
+        residential_path_end_text = f"""You did it! Now we have `residential_parcels`, a dataframe that contains all of the residential, single-family properties in the county."""
         if get_attempted_text_first():
             additional_text = f"""If you wanted to perform an additional check on your own, you could think about the functions we used previously while performing the text analysis of dataframes to look for parcels in TriCOG's boundaries. The text analysis was not successful, but it did teach us that we can access dataframe columns' values using the `dataframe.COLUMN` construction, and that we can use the `set()` function to see only unique values."""
         else:
@@ -2763,6 +2828,7 @@ def residential_path_end(
         mo.output.replace(
             mo.vstack(
                 [
+                    mo.md(f"""###residential_parcels"""),
                     residential_parcels,
                     mo.md(residential_path_end_text),
                 ]
@@ -2774,7 +2840,7 @@ def residential_path_end(
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def abandoned_getters_setters(mo):
     get_abandoned_path_0, set_abandoned_path_0 = mo.state(False)
     get_abandoned_path_1, set_abandoned_path_1 = mo.state(False)
@@ -2799,6 +2865,7 @@ def abandoned_getters_setters(mo):
     get_abandoned_path_join_4, set_abandoned_path_join_4 = mo.state(False)
     get_abandoned_path_iteration_first, set_abandoned_path_iteration_first = mo.state(False)
     get_abandoned_path_join_first, set_abandoned_path_join_first = mo.state(False)
+    get_abandoned_path_successful_tricog_join, set_abandoned_path_successful_tricog_join = mo.state(False)
 
     get_abandoned_iteration_path_1, set_abandoned_iteration_path_1 = mo.state(False)
     get_abandoned_join_path_1, set_abandoned_join_path_1 = mo.state(False)
@@ -2835,7 +2902,17 @@ def abandoned_getters_setters(mo):
             set_abandoned_path_iteration_7(False)
         else:
             pass
+
+    def abandoned_path_check_join(join_response_dict: dict[str:str])-> None: 
+        if join_response_dict['leftdrop'] != join_response_dict['rightdrop']: 
+            if join_response_dict['left_on_cols_drop'].lower().startswith('pin') and join_response_dict['right_on_cols_drop'].lower().startswith('pin'): 
+                if join_response_dict['join_type_drop'] == 'inner': 
+                    set_abandoned_path_successful_tricog_join(True)
+                    return None
+        set_abandoned_path_successful_tricog_join(False)
+        return None
     return (
+        abandoned_path_check_join,
         get_abandoned_file_selection_state,
         get_abandoned_iteration_path_1,
         get_abandoned_join_path_1,
@@ -2856,6 +2933,7 @@ def abandoned_getters_setters(mo):
         get_abandoned_path_join_1,
         get_abandoned_path_join_2,
         get_abandoned_path_join_3,
+        get_abandoned_path_successful_tricog_join,
         handle_abandoned_drop_down_path_selection,
         reset_abandoned_paths,
         set_abandoned_file_selection_state,
@@ -3057,7 +3135,7 @@ def abandoned_exp_builder(
     function_builder_columns = parcels_cols_list + liens_cols_list
 
     join_expression_builder = (mo.md(
-        """**Select the values to test how the merge works.**<br>pd.merge ( {leftdrop} {rightdrop} {left_on_cols_drop} {right_on_cols_drop} {join_type_drop})<br><br>**What do you expect the output to look like?** {join_expression_textbox}""").batch(
+        """**Select the values to test how the merge works.**<br>pd.merge ( {leftdrop},&ensp;{rightdrop},&ensp; {left_on_cols_drop},&ensp; {right_on_cols_drop},&ensp;{join_type_drop})<br><br>**What do you expect the output to look like?** {join_expression_textbox}""").batch(
         leftdrop=mo.ui.dropdown(label="left =", options=['parcels_df', 'liens_df']),
         rightdrop=mo.ui.dropdown(label="right = ", options=['parcels_df', 'liens_df']),
         left_on_cols_drop=mo.ui.dropdown(label="left_on = ", options=function_builder_columns),
@@ -3162,6 +3240,7 @@ def abandoned_path_2(get_abandoned_path_2, liens_df, mo, set_abandoned_path_3):
             mo.vstack(
                 [
                     mo.md(f"""Let's take another look at the tax liens summary file."""),
+                    mo.md(f"""###liens_df"""),
                     liens_df,
                     mo.md(f"""The dataset is fairly easy to interpret, thanks to the small number of columns. The dataset contains an ID row, the parcel ID Number ('pin'), the number of liens against the property ('number'), and the total amount owed in taxes ('total_amount'). 
 
@@ -3264,7 +3343,7 @@ def _(
                     mo.md(f"""###Joins in pandas"""),
                     mo.md(f"""To perform joins in pandas, you can use the `pd.merge()` function. When using the function, you can specify the two dataframes you want to join, the name of the columns to be used to join the two dataframes, and whether the join should be left, right, or inner. There are additional parameters that you can read about in pandas' docs, but these paramaters, at a minimum, can get you started.<br><br>
                     The function looks something like this: <br><br>
-                    _output_dataframe_ = **pd.merge(**  left_dataframe, right_dataframe, left_column_name, right_column_names, join_type  **)**<br><br>
+                    _output_dataframe_ = **pd.merge(**  left_dataframe,&ensp; right_dataframe,&ensp; left_column_name,&ensp; right_column_names,&ensp; join_type  **)**<br><br>
                     That's a bit long and awkward to look at -- let's try using that equation with the `parcels_df` and the `liens_df`."""),
 
                 ]
@@ -3336,13 +3415,15 @@ def _(
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     abandoned_iteration_generate_empty_lien_column_code_snippet,
     abandoned_iteration_text_box_adding_lien_column,
+    abandoned_path_check_join,
     get_abandoned_path_iteration_2,
     get_abandoned_path_iteration_lien_column_counter,
     get_abandoned_path_join_2,
+    get_abandoned_path_successful_tricog_join,
     incorrect_answer_text_generator,
     join_expression_builder,
     join_expression_output_dict,
@@ -3377,8 +3458,15 @@ def _(
                 Perhaps check and make sure that the columns selected in the `left_on` and `right_on` parameters are able to be matched together?"""
             if join_expression_error_text == "":
                 set_abandoned_path_join_3(True)
+                abandoned_path_check_join(join_exp_responses)
+                sample_output_header = mo.md(f"""##parcels_with_liens""") if get_abandoned_path_successful_tricog_join() else mo.md(f"""""")
                 mo.output.replace(
-                    sample_output
+                    mo.vstack(
+                        [
+                            sample_output_header,
+                            sample_output
+                        ]
+                    )
                 )
             else:
                 set_abandoned_path_join_3(False)
@@ -3426,20 +3514,27 @@ def _(
     filtered_parcels_df_liens_col,
     get_abandoned_path_iteration_3,
     get_abandoned_path_join_3,
+    get_abandoned_path_successful_tricog_join,
     mo,
 ):
     mo.stop(not get_abandoned_path_join_3() and not get_abandoned_path_iteration_3())
 
     if get_abandoned_path_join_3():
-        mo.output.replace(
-            mo.vstack(
+        if get_abandoned_path_successful_tricog_join(): 
+            abandoned_path_successful_join_final_text = mo.vstack(
                 [
-                    mo.md(f"""That looks great, you did it! Now that you've successfully constructed the expression to perform a merge, play around with the parameters a bit. See what happens when you change them, and how that impacts the output. For example, the length changes if you switch the type of join.<br><br>
+                    mo.md(f"""Congratulations! You did it! You performed a join that created a dataframe meeting TriCOG's needs (a set of parcels that have liens assessed against them).<br><br>
+            Now that you've successfully constructed the expression to perform a merge, play around with the parameters a bit. See what happens when you change them, and how that impacts the output. For example, the length changes if you switch the type of join.<br><br>
                     Feel free to make whatever changes you want, but take a second to write some of your thoughts about what changes you made and how the changes impact the output in the box below."""),
                     abandoned_post_join_selector_reflection,
-
                 ]
             )
+        else: 
+            abandoned_path_successful_join_final_text = mo.md(f"""You created a join between the two files that did not create any errors. Well done!<br><br> 
+            Look carefully at this join though -- is this what TriCOG is looking for? Does it look like a dataframe that only contains parcels with liens assessed against them? Or is it a list of every parcel, with lien data added to some of them? Or is it a list of every lien, with parcel data attached to some of them? Is it showing something else?<br><br>
+            Go back and reconsider the various parameters and think about how each one might alter the output. Continue to tweak them until you arrive at the output that TriCOG is looking for.""")
+        mo.output.replace(
+            abandoned_path_successful_join_final_text
         )
     elif get_abandoned_path_iteration_3():
         mo.output.replace(
@@ -3519,11 +3614,6 @@ def _(abandoned_end_of_iteration_form, get_abandoned_path_iteration_5, mo):
         )
     else:
         mo.output.clear()
-    return
-
-
-@app.cell
-def _():
     return
 
 
@@ -3659,9 +3749,14 @@ def _(combining_files_survey_form, get_combining_files_0, mo):
             mo.vstack(
                 [
                     mo.md(f"""##Combining the Data"""),
-                    mo.md(f"""We now have three datasets, and each dataset meets one of the criteria set forth by TriCOG land bank. To get our final result, we need to combine them so our final dataframe only has parcels that meet all three criteria. 
-
-        Before we do that though, let's think about what we expect the final dataframe to look like. Answer the following questions in the boxes below."""),
+                    mo.md(f"""We now have three datasets, and each dataset meets one of the criteria set forth by TriCOG land bank:
+                    <ul>
+                    <li>`clipped_parcels` <i>(parcels within TriCOG's boundaries)</i></li>
+                    <li>`residential_parcels` <i>(residential parcels zoned for single-family homes)</i></li>
+                    <li>`parcels_with_liens` <i>(parcels that have liens against them, our proxy for abandonment)</i></li>
+                    </ul>
+                    To get our final result, we need to combine them so our final dataframe only has parcels that meet all three criteria. 
+        <br><br>Before we do that though, let's think about what we expect the final dataframe to look like. Answer the following questions in the boxes below.<br>"""),
                     combining_files_survey_form
                 ]
             )
@@ -3825,6 +3920,7 @@ def _(final_output, get_combining_files_3, lien_slider, mo):
         mo.output.replace(
             mo.vstack(
                 [
+                    mo.md(f"""###final_output"""),
                     final_output,
                     mo.md(f"""##Reflections"""),
                     mo.md(f"""After much work, we have arrived at this dataframe.<br><br> 
