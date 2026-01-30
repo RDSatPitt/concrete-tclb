@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.0"
+__generated_with = "0.14.6"
 app = marimo.App(width="medium")
 
 
@@ -479,9 +479,7 @@ def title(mo):
 
 @app.cell(hide_code=True)
 def intro_text(mo):
-    mo.md(r"""
-    Congratulations on your new role with TriCOG Land Bank! You have been hired to assist their GIS and Data Analyst. Your task is to help the analyst identify homes that the Land Bank can purchase and make available as affordable housing. Please press one of four buttons immediately below for background information, or select "Click Here To Begin" to get started!
-    """)
+    mo.md(r"""Congratulations on your new role with TriCOG Land Bank! You have been hired to assist their GIS and Data Analyst. Your task is to help the analyst identify homes that the Land Bank can purchase and make available as affordable housing. Please press one of four buttons immediately below for background information, or select "Click Here To Begin" to get started!""")
     return
 
 
@@ -691,7 +689,7 @@ def _(liens_df, mo):
                 mo.md(f"""##liens_df"""),
                 liens_df,
                 mo.md(
-                    f"""<br>The `liens.csv` file (stored as `liens_df`) is a dataset that contains information about properties that have liens against them. You'll notice that this file also has a new parcel ID for each row, only in this file the column is labeled 'pin' (instead of 'PARID'). The three columns of note are the parcel ID, the number of liens a property has, and the total amount of money owed.""")
+                    f"""<br>`liens_df` (read from the file `liens.csv`) is a dataset that contains information about properties that have liens against them. You'll notice that this file also has a new parcel ID for each row, only in this file the column is labeled 'pin' (instead of 'PARID'). The three columns of note are the parcel ID, the number of liens a property has, and the total amount of money owed.""")
             ]
         )
     )
@@ -1446,7 +1444,7 @@ def tricog_path_cell_1(
     mo.stop(not get_tricog_text_path_cell_one() and not tricog_geo_path_cell_one)
     tricog_text_path_cell_two = False
     # tricog_geo_path_cell_two = False 
-    
+
     # text analysis path
     if get_tricog_text_path_cell_one():
         mo.output.replace(
@@ -2118,7 +2116,18 @@ def residential_prep(handle_residential_filter, mo, set_residential_path_zero):
 
     # chat variable
     response_message = "I'm glad you asked! The assessments file is very large and confusing. You'll want to find parcels where the CLASSDESC value is 'RESIDENTIAL' and the USEDESC value is 'SINGLE FAMILY'."
+
+    def generate_usedesc_incorrect_singular_or_plural_text(usedesc_value_dict: dict[str, bool])->str:
+        usedesc_incorrect_responses_counter = 0
+        for a, b in usedesc_value_dict.items():
+            if b == True:
+                usedesc_incorrect_responses_counter += 1
+        if usedesc_incorrect_responses_counter == 1: 
+            return 'that makes'
+        else: 
+            return 'any of those make'
     return (
+        generate_usedesc_incorrect_singular_or_plural_text,
         residential_start_button,
         residential_text_box_final_classdesc_usedesc_filter,
         response_message,
@@ -2656,6 +2665,7 @@ def _(
 
 @app.cell
 def _(
+    generate_usedesc_incorrect_singular_or_plural_text,
     get_residential_path_four_usedesc_b,
     lists_of_usedesc_checkbox_answers,
     mo,
@@ -2670,7 +2680,8 @@ def _(
             if len(good_answers) > 0:
                 good_answers_output_text = f"""Nice work! Values like `{good_answers[0]}` make sense as single-family residences.<br><br>"""
             else:
-                good_answers_output_text = f"""Hm...I'm not sure if any of those make sense as descriptions of single-family residences.  """
+                singular_or_plural_text = generate_usedesc_incorrect_singular_or_plural_text(usedesc_value_checkbox_form.value)
+                good_answers_output_text = f"""Hm...I'm not sure if {singular_or_plural_text} sense as descriptions of single-family residences.  """
             if len(missing_answers) > 0:
                 missing_answers_output_text = f"""What about `{missing_answers[0]}`, though? Could that be considered a single-family residence?  """
             else:
@@ -2808,7 +2819,7 @@ def residential_path_end(
     abandoned_path_zero = False
 
     if get_residential_filter_state():
-        residential_path_end_text = f"""You did it! Now we have a dataframe that contains all of the residential, single-family properties in the county."""
+        residential_path_end_text = f"""You did it! Now we have `residential_parcels`, a dataframe that contains all of the residential, single-family properties in the county."""
         if get_attempted_text_first():
             additional_text = f"""If you wanted to perform an additional check on your own, you could think about the functions we used previously while performing the text analysis of dataframes to look for parcels in TriCOG's boundaries. The text analysis was not successful, but it did teach us that we can access dataframe columns' values using the `dataframe.COLUMN` construction, and that we can use the `set()` function to see only unique values."""
         else:
@@ -3124,7 +3135,7 @@ def abandoned_exp_builder(
     function_builder_columns = parcels_cols_list + liens_cols_list
 
     join_expression_builder = (mo.md(
-        """**Select the values to test how the merge works.**<br>pd.merge ( {leftdrop} {rightdrop} {left_on_cols_drop} {right_on_cols_drop} {join_type_drop})<br><br>**What do you expect the output to look like?** {join_expression_textbox}""").batch(
+        """**Select the values to test how the merge works.**<br>pd.merge ( {leftdrop},&ensp;{rightdrop},&ensp; {left_on_cols_drop},&ensp; {right_on_cols_drop},&ensp;{join_type_drop})<br><br>**What do you expect the output to look like?** {join_expression_textbox}""").batch(
         leftdrop=mo.ui.dropdown(label="left =", options=['parcels_df', 'liens_df']),
         rightdrop=mo.ui.dropdown(label="right = ", options=['parcels_df', 'liens_df']),
         left_on_cols_drop=mo.ui.dropdown(label="left_on = ", options=function_builder_columns),
@@ -3332,7 +3343,7 @@ def _(
                     mo.md(f"""###Joins in pandas"""),
                     mo.md(f"""To perform joins in pandas, you can use the `pd.merge()` function. When using the function, you can specify the two dataframes you want to join, the name of the columns to be used to join the two dataframes, and whether the join should be left, right, or inner. There are additional parameters that you can read about in pandas' docs, but these paramaters, at a minimum, can get you started.<br><br>
                     The function looks something like this: <br><br>
-                    _output_dataframe_ = **pd.merge(**  left_dataframe, right_dataframe, left_column_name, right_column_names, join_type  **)**<br><br>
+                    _output_dataframe_ = **pd.merge(**  left_dataframe,&ensp; right_dataframe,&ensp; left_column_name,&ensp; right_column_names,&ensp; join_type  **)**<br><br>
                     That's a bit long and awkward to look at -- let's try using that equation with the `parcels_df` and the `liens_df`."""),
 
                 ]
@@ -3448,7 +3459,7 @@ def _(
             if join_expression_error_text == "":
                 set_abandoned_path_join_3(True)
                 abandoned_path_check_join(join_exp_responses)
-                sample_output_header = mo.md(f"""##parcels_with_liens_df""") if get_abandoned_path_successful_tricog_join() else mo.md(f"""""")
+                sample_output_header = mo.md(f"""##parcels_with_liens""") if get_abandoned_path_successful_tricog_join() else mo.md(f"""""")
                 mo.output.replace(
                     mo.vstack(
                         [
@@ -3909,6 +3920,7 @@ def _(final_output, get_combining_files_3, lien_slider, mo):
         mo.output.replace(
             mo.vstack(
                 [
+                    mo.md(f"""###final_output"""),
                     final_output,
                     mo.md(f"""##Reflections"""),
                     mo.md(f"""After much work, we have arrived at this dataframe.<br><br> 
