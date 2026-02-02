@@ -2123,9 +2123,9 @@ def residential_prep(handle_residential_filter, mo, set_residential_path_zero):
             if b == True:
                 usedesc_incorrect_responses_counter += 1
         if usedesc_incorrect_responses_counter == 1: 
-            return 'that makes'
+            return 'that makes as a description'
         else: 
-            return 'any of those make'
+            return 'any of those make sense as descriptions'
     return (
         generate_usedesc_incorrect_singular_or_plural_text,
         residential_start_button,
@@ -2681,7 +2681,7 @@ def _(
                 good_answers_output_text = f"""Nice work! Values like `{good_answers[0]}` make sense as single-family residences.<br><br>"""
             else:
                 singular_or_plural_text = generate_usedesc_incorrect_singular_or_plural_text(usedesc_value_checkbox_form.value)
-                good_answers_output_text = f"""Hm...I'm not sure if {singular_or_plural_text} sense as descriptions of single-family residences.  """
+                good_answers_output_text = f"""Hm...I'm not sure if {singular_or_plural_text} of single-family residences.  """
             if len(missing_answers) > 0:
                 missing_answers_output_text = f"""What about `{missing_answers[0]}`, though? Could that be considered a single-family residence?  """
             else:
